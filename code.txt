@@ -1,0 +1,1317 @@
+<div class="form-container" ng-repeat="repobj in c.data.report">
+  <div class="form-content">
+      <!-- Basic Report Details -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="report-name">Report Name:</label>
+          <input type="text" id="report-name" placeholder="Enter Report Name" ng-model="repobj.name" />
+        </div>
+      </div>
+			<div class="form-row">
+        <div class="form-group half-width">
+          <label for="tableSelect">Table:</label>
+          <sn-record-picker
+             sn-model="repobj.table.value"
+             field="repobj.table"
+             table="'sys_db_object'"
+             display-field="'label'"
+             value-field="'name'"
+             search-fields="'label'"
+             page-size="50"
+             on-change="c.fetchFieldsForTable(repobj.table.value)">
+          </sn-record-picker>
+        </div>
+        <div class="form-group half-width">
+          <label for="fieldSelect">Field:</label>
+          <select class="form-control" 
+                  ng-model="repobj.field.value"
+                  ng-options="fld.name as fld.label for fld in c.fields">
+            <option value="">-- Select Field --</option>
+          </select>
+        </div>
+      </div>
+    
+    
+    <!-- Filter component and Encoded Query -->
+    
+    
+<div class="filter-widget">
+    <div>
+        <button class="no-border-btn" ng-click="c.addConditionAndShowButtons()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="15" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="3 3 21 3 14 12 14 19 10 21 10 12 3 3"></polygon>
+            </svg>
+        </button>
+
+        <!-- Run Button -->
+        <button ng-click="c.applyFilter()" ng-show="c.showFilterButtons">Run</button>
+
+        <!-- Clear All Button -->
+        <button ng-click="c.clearFilter()" ng-show="c.showFilterButtons">Clear All</button>
+    </div>
+
+    <div ng-repeat="condition in c.conditions track by $index">
+        <!-- Logical Operator -->
+        <span ng-if="$index > 0">[{{ condition.logicalOperator }}]</span>
+
+        <!-- Field Selection -->
+        <select ng-model="condition.selectedField"
+                ng-options="field.field as field.field for field in c.selectfield track by field.field"
+                ng-change="c.handleFieldSelection(condition)">
+            <option value="">-- Choose Field --</option>
+        </select>
+
+        <!-- Operator Selection -->
+        <select ng-model="condition.operator" 
+                ng-options="operator.value as operator.label for operator in c.operators">
+            <option value="">-- Operator --</option>
+        </select>
+
+        <!-- Value Selection -->
+        <input type="text" ng-model="condition.value" 
+               ng-if="c.isStringField" 
+               placeholder="Enter value" />
+
+        <select ng-model="condition.value" 
+                ng-options="value for value in c.booleanValues" 
+                ng-if="c.isBooleanField">
+            <option value="">-- Value --</option>
+        </select>
+
+        <select ng-model="condition.value" 
+                ng-options="option.value as option.choice for option in c.referencechoice track by option.value"
+                ng-if="c.isReferenceField">
+            <option value="">-- Select Reference Record --</option>
+        </select>
+
+        <select ng-model="condition.value" 
+                ng-options="choice.value as choice.choice for choice in c.choices" 
+                ng-if="c.isChoiceField">
+            <option value="">-- Choose Value --</option>
+        </select>
+
+        <!-- AND / OR Buttons -->
+        <button ng-click="c.addLogicalOperator($index, '^')">AND</button>
+        <button ng-click="c.addLogicalOperator($index, '^OR')">OR</button>
+    </div>
+</div>
+
+      <!-- Chart Type and Encoded Query -->
+      <div class="form-row">
+        <div class="form-group half-width">
+          <label for="chartType">Chart Type:</label>
+          <select id="chartType" class="form-control" ng-model="repobj.type.value">
+            <option value="">-- Select Chart Type --</option>
+            <option value="bar">Bar Chart</option>
+            <option value="line">Line Chart</option>
+            <option value="mixed">Mixed Chart</option>
+            <option value="pie">Pie Chart</option>
+            <option value="doughnut">Doughnut Chart</option>
+            <option value="gantt">Gantt Chart</option>
+          </select>
+        </div>
+        <div class="form-group half-width">
+          <label for="encodedQuery">Encoded Query:</label>
+         <input type="text" id="encodedQuery" ng-model="repobj.encoded_query" ng-init="c.parseEncodedQuery()" />
+
+        </div>
+      </div>
+     <div class="form-row">
+    	<div class="form-group half-width">
+            <label for="dashboard">Dashboard :-</label>
+            <sn-record-picker 
+               sn-model="repobj.dashboard.value"
+               field="repobj.dashboard"
+               table="'x_1069982_report_0_dashboard'" 
+               display-field="'name'" 
+               value-field="'sys_id'" 
+               search-fields="'name'" 
+               default-query="'active=true'"
+               sn-disabled = true
+               page-size="100">
+            </sn-record-picker>
+         </div>
+    	 <div class="form-row half-width">
+         <label for="tab">Tab :-</label>
+         <sn-record-picker 
+            sn-model="repobj.tab.value"
+            field="repobj.tab"
+            table="'x_1069982_report_0_tabs'" 
+            display-field="'name'" 
+            value-field="'sys_id'" 
+            search-fields="'name'" 
+            default-query="'active=true'"
+            sn-disabled = true
+            page-size="100">
+         </sn-record-picker>
+      </div>
+      </div>
+      <!-- Editors Section (Write Access) 
+      <div class="section">
+         <h3>Editors:</h3>
+         <div class="row">
+            <div class="box dynamic-card">
+               <div class="box-header"><span>Roles</span></div>
+               <div class="box-content">
+                  <sn-record-picker
+                     field="repobj.write_access_to_role"
+                     table="'sys_user_role'"
+                     display-field="'name'"
+                     value-field="'sys_id'"
+                     search-fields="'name'"
+                     page-size="100"
+                     multiple="true"
+                     sn-model="repobj.write_access_to_role.value">
+                  </sn-record-picker>
+               </div>
+            </div>
+            <div class="box dynamic-card">
+               <div class="box-header"><span>Groups</span></div>
+               <div class="box-content">
+                  <sn-record-picker
+                     field="repobj.write_access_to_group"
+                     table="'sys_user_group'"
+                     display-field="'name'"
+                     value-field="'sys_id'"
+                     search-fields="'name'"
+                     page-size="100"
+                     multiple="true"
+                     sn-model="repobj.write_access_to_group.value">
+                  </sn-record-picker>
+               </div>
+            </div>
+            <div class="box dynamic-card">
+               <div class="box-header"><span>Users</span></div>
+               <div class="box-content">
+                  <sn-record-picker
+                     field="repobj.write_access_to_user"
+                     table="'sys_user'"
+                     display-field="'name,user_name'"
+                     sn-model="repobj.write_access_to_user.value"
+                     value-field="'sys_id'"
+                     search-fields="'name'"
+                     page-size="100"
+                     multiple="true">
+                  </sn-record-picker>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- Watchers Section (Read Access) 
+      <div class="section">
+         <h3>Watchers:</h3>
+         <div class="row">
+            <div class="box dynamic-card">
+               <div class="box-header"><span>Roles</span></div>
+               <div class="box-content">
+                  <sn-record-picker
+                     field="repobj.read_access_to_role"
+                     table="'sys_user_role'"
+                     display-field="'name'"
+                     value-field="'sys_id'"
+                     search-fields="'name'"
+                     page-size="100"
+                     multiple="true"
+                     sn-model="repobj.read_access_to_role.value">
+                  </sn-record-picker>
+               </div>
+            </div>
+            <div class="box dynamic-card">
+               <div class="box-header"><span>Groups</span></div>
+               <div class="box-content">
+                  <sn-record-picker
+                     field="repobj.read_access_to_group"
+                     table="'sys_user_group'"
+                     display-field="'name'"
+                     value-field="'sys_id'"
+                     search-fields="'name'"
+                     page-size="100"
+                     multiple="true"
+                     sn-model="repobj.read_access_to_group.value">
+                  </sn-record-picker>
+               </div>
+            </div>
+            <div class="box dynamic-card">
+               <div class="box-header"><span>Users</span></div>
+               <div class="box-content">
+                  <sn-record-picker
+                     field="repobj.read_access_to_user"
+                     table="'sys_user'"
+                     display-field="'name,user_name'"
+                     value-field="'sys_id'"
+                     search-fields="'name'"
+                     page-size="100"
+                     multiple="true"
+                     sn-model="repobj.read_access_to_user.value">
+                  </sn-record-picker>
+               </div>
+            </div>
+         </div>
+      </div>  -->
+    
+      <!-- Action Buttons -->
+      <div class="button-section">
+         <button class="create-button" ng-click="c.updateReportInfo()">Update</button>
+         <button class="cancel-button" ng-click="c.cancel()">Cancel</button>
+      </div>
+  </div>
+  <div class="no-content-area" ng-show="!c.data.report.length">
+    <h1>No report found.</h1>
+  </div>
+</div>
+/* General Styling */
+.form-container {
+  width: auto;
+  margin: auto;
+  background-color: #ffffff;
+  border-radius: 8px;
+}
+
+/* Header Styling */
+.header h1 {
+  font-size: 24px;
+  color: #ffffff;
+  background-color: #2b3e50;
+  padding: 10px 15px;
+  border-radius: 8px 8px 0 0;
+  margin: 0;
+}
+
+/* Form Content Styling */
+.form-content {
+  padding: 20px;
+}
+
+.form-row {
+  margin-bottom: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.form-group {
+  	display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.half-width {
+    width: 48%;
+}
+
+label {
+  font-size: 16px;
+  color: #2e3b4e;
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+/* Sections (Editors & Watchers) */
+.section {
+  margin-bottom: 30px;
+}
+
+.section h3 {
+  font-size: 18px;
+  color: #2e3b4e;
+  margin-bottom: 15px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.box {
+  flex: 1;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  height: 150px;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: #2e3b4e;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+}
+
+.add-btn {
+  background-color: #2e3b4e;
+  color: #ffffff;
+  border: none;
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.add-btn:hover {
+  background-color: #1a2533;
+}
+
+/* Buttons Section */
+.button-section {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.create-button,
+.cancel-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 0 10px;
+  border: none;
+}
+
+.create-button {
+  background-color: #2e3b4e;
+  color: #fff;
+}
+
+.create-button:hover {
+  background-color: #445772;
+}
+
+.cancel-button {
+  background-color: white;
+  color: #2e3b4e;
+}
+
+.cancel-button:hover {
+  background-color: #e2e6ea;
+}
+
+.selected-roles {
+  list-style-type: none;
+  padding: 0;
+}
+
+.selected-roles li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 5px 0;
+  padding: 5px 10px;
+  background-color: #f5f5f5;
+  border-radius: 5px;
+}
+
+.selected-roles .btn-danger {
+  margin-left: 10px;
+}
+
+.dynamic-card {
+  overflow: auto;
+  /* Allows scrolling if needed */
+  max-height: 100%;
+  /* Ensures the card doesn't exceed its parent container */
+  min-height: 50px;
+  /* Sets a minimum height */
+}
+
+
+(function() {
+  var reportSysId = input.sys_id || options.sys_id;
+  data.report = [];
+
+  if (reportSysId) {
+    var reportGR = new GlideRecord('x_1069982_report_0_report');
+    if (reportGR.get(reportSysId)) {
+      var obj = {};
+      obj.sysId = reportSysId;
+      obj.name = reportGR.getValue('name');
+      obj.active = reportGR.getValue('active') == 'true';
+      
+      obj.table = {
+        displayValue: reportGR.getDisplayValue('table'),
+        value: reportGR.getValue('table')
+      };
+      obj.tab = {
+        displayValue: reportGR.getDisplayValue('tab'),
+        value: reportGR.getValue('tab')
+      };
+			 obj.dashboard = {
+        displayValue: reportGR.tab.dashboard.getDisplayValue(),
+        value: reportGR.tab.dashboard.sys_id
+      };
+			 obj.field = {
+        displayValue: reportGR.getDisplayValue('field'),
+        value: reportGR.getValue('field')
+      };
+      obj.type = {
+        displayValue: reportGR.getDisplayValue('type'),
+        value: reportGR.getValue('type').toLowerCase()
+      };
+      obj.encoded_query = reportGR.getValue('encoded_query');
+      
+      obj.read_access_to_role = {
+        displayValue: reportGR.getDisplayValue('read_access_to_role'),
+        value: reportGR.getValue('read_access_to_role')
+      };
+      obj.read_access_to_group = {
+        displayValue: reportGR.getDisplayValue('read_access_to_group'),
+        value: reportGR.getValue('read_access_to_group')
+      };
+      obj.read_access_to_user = {
+        displayValue: reportGR.getDisplayValue('read_access_to_user'),
+        value: reportGR.getValue('read_access_to_user')
+      };
+      obj.write_access_to_role = {
+        displayValue: reportGR.getDisplayValue('write_access_to_role'),
+        value: reportGR.getValue('write_access_to_role')
+      };
+      obj.write_access_to_group = {
+        displayValue: reportGR.getDisplayValue('write_access_to_group'),
+        value: reportGR.getValue('write_access_to_group')
+      };
+      obj.write_access_to_user = {
+        displayValue: reportGR.getDisplayValue('write_access_to_user'),
+        value: reportGR.getValue('write_access_to_user')
+      };
+      
+      data.report.push(obj);
+			
+			console.log("reportCha Data")
+			gs.info("Repprt Cha Data"+ JSON.stringify(data.report));
+    } else {
+      gs.info("Report not found: " + reportSysId);
+    }
+  }
+  
+  // Handle update action
+  if (input && input.action == 'updateReportInfo') {
+    var updGR = new GlideRecord('x_1069982_report_0_report');
+    updGR.addQuery('sys_id', input.sys_id);
+    updGR.query();
+    if (updGR.next()) {
+      updGR.setValue('name', input.name);
+    //  updGR.setValue('active', input.active);
+      updGR.setValue('table', input.table);
+      updGR.setValue('field', input.field);
+      updGR.setValue('type', input.type);
+      updGR.setValue('encoded_query', input.encoded_query);
+      
+      updGR.setValue('read_access_to_role', input.read_access_to_role);
+      updGR.setValue('read_access_to_group', input.read_access_to_group);
+      updGR.setValue('read_access_to_user', input.read_access_to_user);
+      updGR.setValue('write_access_to_role', input.write_access_to_role);
+      updGR.setValue('write_access_to_group', input.write_access_to_group);
+      updGR.setValue('write_access_to_user', input.write_access_to_user);
+      
+      updGR.update();
+    }
+  }
+})();
+api.controller = function(spUtil, $scope, spModal) {
+    var c = this;
+
+    c.encodedQuery = c.data.report[0].encoded_query;
+    c.selectedTable = "";
+    c.conditions = [];
+    c.selectfield = [];
+    c.referencechoice = [];
+    // Array to hold the field list for the selected table
+    c.fields = [];
+
+    // On initialization, if report data is present, fetch fields for the table
+    c.$onInit = function() {
+        if (c.data.report && c.data.report.length > 0 && c.data.report[0].table && c.data.report[0].table.value) {
+            c.fetchFieldsForTable(c.data.report[0].table.value);
+            c.parseEncodedQuery();
+        }
+    };
+
+    // Function to fetch fields for a given table using GlideAjax
+    c.fetchFieldsForTable = function(tableName) {
+        if (!tableName) {
+            c.fields = [];
+            return;
+        }
+        var ga = new GlideAjax('global.getChartRevamp');
+        ga.addParam('sysparm_name', 'getFields');
+        ga.addParam('sysparm_tableid', tableName);
+        ga.getXMLAnswer(function(response) {
+            var answer = JSON.parse(response);
+            c.fields = answer || [];
+            $scope.$apply();
+        });
+        c.fetchFields();
+    };
+
+
+    c.updateReportInfo = function() {
+        var rep = c.data.report[0];
+        if (!rep) return;
+        c.data.sys_id = rep.sysId;
+        c.data.name = rep.name;
+        c.data.active = rep.active;
+        c.data.table = rep.table.value;
+        c.data.field = rep.field.value;
+        c.data.type = rep.type.value;
+        c.data.encoded_query = rep.encoded_query;
+
+        // Access fields
+        c.data.read_access_to_role = rep.read_access_to_role.value;
+        c.data.read_access_to_group = rep.read_access_to_group.value;
+        c.data.read_access_to_user = rep.read_access_to_user.value;
+        c.data.write_access_to_role = rep.write_access_to_role.value;
+        c.data.write_access_to_group = rep.write_access_to_group.value;
+        c.data.write_access_to_user = rep.write_access_to_user.value;
+
+        c.data.action = 'updateReportInfo';
+
+        c.server.update().then(function() {
+            $scope.$parent.$dismiss();
+        });
+    };
+
+    c.cancel = function() {
+        $scope.$parent.$dismiss();
+    };
+
+
+
+    //
+    c.selectedTable = "";
+    //  c.selectfield = {};
+    c.selectType = [];
+    c.fieldsname = [];
+    //	c.referenceRecords = [];
+    c.referencechoice = [];
+    c.conditions = [];
+    c.operators = [{
+            label: 'is',
+            value: '='
+        },
+        {
+            label: 'is not',
+            value: '!='
+        },
+        {
+            label: 'is empty',
+            value: 'ISEMPTY'
+        },
+        {
+            label: 'is not empty',
+            value: 'ISNOTEMPTY'
+        },
+        {
+            label: "AND",
+            value: "^"
+        },
+        {
+            label: "OR condition",
+            value: " ^OR"
+        },
+        {
+            label: "OR filter",
+            value: "^NQ"
+        },
+        {
+            label: "starts with ",
+            value: "STARTSWITH"
+        },
+        {
+            label: "ends with ",
+            value: "%"
+        },
+        {
+            label: "contains",
+            value: "*"
+        },
+        {
+            label: "does not contain",
+            value: "!*"
+        },
+        {
+            label: "is anything",
+            value: "ANYTHING"
+        },
+        {
+            label: "is empty string ",
+            value: "EMPTYSTRING"
+        },
+        {
+            label: "less than or is",
+            value: "<="
+        },
+        {
+            label: "greater than or is",
+            value: ">="
+        },
+        {
+            label: "between",
+            value: "BETWEEN"
+        },
+        {
+            label: " is same",
+            value: "SAMEAS"
+        },
+        {
+            label: "is different",
+            value: "NSAMEAS"
+        },
+        {
+            label: "is(dynamic)",
+            value: "DYNAMIC"
+        },
+        {
+            label: "is one of",
+            value: "IN"
+        },
+        {
+            label: "is not one of",
+            value: "NOT IN"
+        },
+        {
+            label: "less than",
+            value: "<"
+        },
+        {
+            label: "greater than",
+            value: " >"
+        },
+        {
+            label: "on",
+            value: "ONToday"
+        },
+        {
+            label: "not on ",
+            value: "NOTONToday"
+        },
+        {
+            label: "before",
+            value: "<"
+        },
+        {
+            label: "at or before",
+            value: "<="
+        },
+        {
+            label: "after",
+            value: ">"
+        },
+        {
+            label: "at or after",
+            value: ">="
+        },
+        {
+            label: "trend(on or after)",
+            value: "DETEPART"
+        },
+        {
+            label: "trend(on or before)",
+            value: "DATEPART"
+        },
+        {
+            label: "trend(after)",
+            value: "DATEPART"
+        },
+        {
+            label: "trend(before)",
+            value: "DATEPART"
+        },
+        {
+            label: "trend(on)",
+            value: "DATEPART"
+        },
+        {
+            label: "relative(after)",
+            value: "RELATIVEGT"
+        },
+        {
+            label: "relative(before)",
+            value: "RELATIVELT"
+        },
+        {
+            label: "is more than",
+            value: "MORETHAN"
+        },
+        {
+            label: "is less than",
+            value: " LESSTHAN"
+        },
+        {
+            label: "greater than field",
+            value: "GT_FIELD"
+        },
+        {
+            label: "less than field",
+            value: "LT_FIELD"
+        },
+        {
+            label: "greater than or is field",
+            value: "GT_OR_EQUALS_FIELD"
+        },
+        {
+            label: "less than or is field",
+            value: "LT_OR_EQULALS_FIELD"
+        },
+        {
+            label: "changes",
+            value: "VALCHANGES"
+        },
+        {
+            label: "changes from",
+            value: "CHANGESFROM"
+        },
+        {
+            label: "changes to ",
+            value: "CHANgesto"
+        },
+    ];
+    c.selectChoice = [];
+
+    // Fetch fields for the selected table
+    c.fetchFields = function() {
+        var getFields = new GlideAjax('global.seletcedfield');
+        getFields.addParam('sysparm_name', 'getDate');
+        getFields.addParam('sysparm_tables', c.data.report[0].table.value);
+
+        getFields.getXMLAnswer(function(response) {
+            try {
+                var res = JSON.parse(response);
+                console.log("✅ Response Data:", res);
+
+                if (!Array.isArray(res)) {
+                    console.error("❌ Unexpected response format:", res);
+                    return;
+                }
+
+                c.selectfield = res.map(function(field) {
+                    return {
+                        field: field.fields,
+                        type: field.type
+                    };
+                });
+
+                console.log("Updated selectfield:", c.selectfield);
+
+                // ✅ Ensure Angular updates the UI
+                $scope.$apply();
+            } catch (e) {
+                console.error("❌ Error parsing JSON:", e, response);
+            }
+        });
+    };
+
+
+
+
+
+
+
+
+    c.handleFieldSelection = function(condition) {
+        //alert(JSON.parse(condition));
+        console.log("Selected Field:", condition.selectedField);
+        console.log("Field Type:", condition.selectedField.type);
+
+        // Reset visibility flags on the condition level
+        condition.isStringField = false;
+        condition.isBooleanField = false;
+        condition.isReferenceField = false;
+        condition.isChoiceField = false;
+
+        if (condition.selectedField.type === "string") {
+            condition.isStringField = true;
+        } else if (condition.selectedField.type === "boolean") {
+            condition.isBooleanField = true;
+            condition.booleanValues = [true, false]; // Set boolean options
+        } else if (condition.selectedField.type === "reference") {
+            condition.isReferenceField = true;
+            c.fetchReferenceRecords(condition, condition.value);
+        } else if (condition.selectedField.type === "choice") {
+            condition.isChoiceField = true;
+            c.fetchChoice(condition);
+        }
+    };
+
+
+
+
+
+
+
+    //        ng-options="value for value in condition.choices" 
+
+
+
+    c.fetchChoice = function(condition) {
+        if (!condition.selectedField) {
+            console.error("No selected field available");
+            return;
+        }
+
+        var getChoices = new GlideAjax('global.seletcedfield');
+        getChoices.addParam('sysparm_name', 'getChoice');
+        getChoices.addParam('sysparm_fields', condition.selectedField.field);
+        getChoices.addParam('sysparm_tablename', c.data.tableSelect.value);
+
+        console.log("Fetching choices for field:", condition.selectedField.field);
+
+        getChoices.getXMLAnswer(function(response) {
+            var result;
+            try {
+                result = JSON.parse(response);
+            } catch (e) {
+                console.error("❌ Error parsing JSON response:", e);
+                return;
+            }
+
+            console.log("Raw response:", result);
+
+            // Ensure result is an array of objects with 'value' and 'choice'
+            c.choices = result.map(function(item) {
+                return {
+                    value: item.values, // Assuming 'value' is coming in the response
+                    choice: item.choices // Assuming 'choice' is coming in the response
+                };
+            });
+
+            console.log("Formatted Choices:", c.choices);
+            $scope.$apply(); // Ensure Angular updates the UI
+        });
+    };
+
+    c.fetchReferenceRecords = function(condition, displayValue) {
+        console.log("🔹 Fetching reference data for:", condition.selectedField);
+
+        var getreference = new GlideAjax('global.seletcedfield');
+        getreference.addParam('sysparm_name', 'getReferenceData');
+        getreference.addParam('sysparm_fields', condition.selectedField.field);
+        getreference.addParam('sysparm_tablename', c.selectedTable);
+
+        getreference.getXMLAnswer(function(response) {
+            console.log("🔹 Raw Response:", response);
+
+            var resultfer;
+            try {
+                resultfer = JSON.parse(response);
+            } catch (e) {
+                console.error("❌ Error parsing JSON response:", e);
+                return;
+            }
+
+            console.log("✅ Parsed Reference Records:", resultfer);
+
+            // Extract only values (sys_id)
+            var valuesOnly = resultfer.map(function(value) {
+                return value.value;
+            });
+
+            console.log("All Values:", valuesOnly);
+
+            // Clear old reference choices and map new data
+            c.referencechoice = resultfer.map(function(value) {
+                return {
+                    value: value.value, // Usually sys_id
+                    choice: value.choice // Human-readable name
+                };
+            });
+
+            console.log("Available reference choices:", c.referencechoice);
+
+            // 🔍 Check if `displayValue` exists in `valuesOnly`
+            var matchedSysId = valuesOnly.find(function(sys_id) {
+                return sys_id.includes(displayValue);
+            });
+
+            if (matchedSysId) {
+                // Find corresponding choice in cc
+                var matchedChoice = c.referencechoice.find(function(item) {
+                    return item.value === matchedSysId;
+                });
+
+                if (matchedChoice) {
+                    console.log("✅ Found matching value in valuesOnly: " + displayValue);
+                    console.log("🔹 Corresponding choice: " + matchedChoice.choice);
+                    //condition.value = matchedChoice.choice; 
+
+                    $scope.$apply(function() {
+                        condition.value = matchedChoice.choice.trim();
+                    });
+
+                } else {
+                    console.log("⚠️ Found a match in valuesOnly, but no corresponding choice found.");
+                }
+            } else {
+                console.log("⚠️ No match found in valuesOnly for displayValue: " + displayValue);
+            }
+
+            // 🔍 Matching logic to find correct reference
+
+
+
+
+
+            $scope.$apply();
+        });
+    };
+
+
+
+    // Apply filter
+    c.applyFilter = function() {
+        var query = '';
+
+        c.conditions.forEach(function(condition, index) {
+            if (condition.logicalOperator && index > 0) {
+                query += condition.logicalOperator;
+            }
+
+            if (condition.selectedField && condition.operator) {
+                query += condition.selectedField.field + condition.operator;
+                if (condition.value !== null && condition.value !== '') {
+                    query += condition.value;
+                }
+            }
+        });
+
+        console.log('Generated Encoded Query:', query);
+        c.encodedQuery = query; // Display the encoded query in UI
+    };
+
+
+    // Function to copy the query
+    c.copyQuery = function() {
+        if (c.createquery) {
+            c.copiedQuery = c.createquery; // Create a copy of the query
+            console.log('Copied Query:', c.copiedQuery);
+        } else {
+            console.warn('No query available to copy');
+        }
+    };
+
+    // Clear all conditions
+    c.clearFilter = function() {
+        c.conditions = [];
+        c.createquery = [];
+    };
+    c.parseEncodedQuery = function() {
+        if (!c.encodedQuery) {
+            console.warn("No encoded query to parse");
+            return;
+        }
+
+        var conditions = c.encodedQuery.split(/(\^OR|\^)/);
+        c.conditions = [];
+
+        conditions.forEach(function(part, index) {
+            if (part === "^" || part === "^OR") {
+                if (c.conditions.length > 0) {
+                    c.conditions[c.conditions.length - 1].logicalOperator = part;
+                }
+            } else {
+                var match = part.match(/^([\w\s\.]+)([=!><\*\^%]*)(.*)$/);
+                if (match) {
+                    var field = match[1].trim();
+                    var operator = match[2].trim();
+                    var displayValue = match[3].trim();
+
+                    console.log("Extracted Field:", field);
+                    console.log("Extracted Operator:", operator);
+                    console.log("Extracted Display Value:", displayValue);
+
+                    var selectedField = null;
+                    for (var i = 0; i < c.selectfield.length; i++) {
+                        if (c.selectfield[i].field.toLowerCase() === field.toLowerCase()) {
+                            selectedField = c.selectfield[i];
+                            break;
+                        }
+                    }
+
+                    if (!selectedField) {
+                        selectedField = {
+                            field: field,
+                            type: "string"
+                        };
+                    }
+
+                    var selectedOperator = null;
+                    for (var j = 0; j < c.operators.length; j++) {
+                        if (c.operators[j].value === operator) {
+                            selectedOperator = c.operators[j];
+                            break;
+                        }
+                    }
+
+                    if (!selectedOperator) {
+                        selectedOperator = {
+                            value: operator
+                        };
+                    }
+
+                    var newCondition = {
+                        selectedField: selectedField,
+                        operator: selectedOperator.value,
+                        value: displayValue || "",
+                        logicalOperator: null
+                    };
+
+                    c.conditions.push(newCondition);
+
+                    // 🔄 Fetch Reference Data & Find Matching Value
+                    if (selectedField.type === "reference") {
+                        c.fetchReferenceRecords(newCondition, displayValue);
+                    } else if (selectedField.type === "choice") {
+                        c.fetchChoice(newCondition);
+                    }
+
+                    // 🔹 Call `handleFieldSelection` to update UI
+                    c.handleFieldSelection(newCondition);
+                }
+            }
+        });
+
+        console.log("Parsed Conditions:", c.conditions);
+        $scope.$apply();
+    };
+
+
+};
+______________________________________________________
+Here is a script include which is i'm calling 
+
+var seletcedfield = Class.create();
+seletcedfield.prototype = Object.extendsObject(AbstractAjaxProcessor, {
+
+
+    getDate: function() {
+
+        //         fieldinfo.fields = "";
+        //   fieldinfo.type = "";
+        var fieldnameandtype = [];
+        var referece = [];
+
+        var table1 = this.getParameter('sysparm_tables');
+        gs.info('childtable' + tab);
+		var tab='';
+		var tableName = new GlideRecord('sys_db_object');
+		if(tableName.get(table1)){
+			tab=tableName.name.toString();
+		}
+
+        var table = new GlideRecord('sys_db_object');
+        table.addQuery('name', tab);
+        table.query();
+        if (table.next()) {
+            var nametable = table.super_class.name;
+            gs.info('vaishnavitask' + nametable);
+        }
+        var field = new GlideRecord('sys_dictionary');
+        field.addQuery('name', nametable).addOrCondition('name', tab);
+        field.addNotNullQuery('sys_name');
+        // field.setLimit(30);
+        field.query();
+
+        while (field.next()) {
+            var fieldinfo = {};
+            fieldinfo.fields = field.element.toString();
+            fieldinfo.type = field.internal_type.toString();
+            gs.info('hivaish' + fieldinfo.fields);
+            gs.info("Select types" + fieldinfo.type);
+            fieldnameandtype.push(fieldinfo);
+            //fieldnameandtype.push(fieldinfo.type);
+
+        }
+
+
+        gs.info('Final vaish Array:' + JSON.stringify(fieldnameandtype));
+        return JSON.stringify(fieldnameandtype);
+    },
+
+
+
+    getChoice: function() {
+        var choices = [];
+        var selectedField = this.getParameter('sysparm_fields'); // User-selected field (specific field)
+       // var selectname = this.getParameter('sysparm_tablename');
+
+		 var table1 = this.getParameter('sysparm_tablename');
+        gs.info('childtable' + table1);
+		var selectname='';
+		var tableName = new GlideRecord('sys_db_object');
+		if(tableName.get(table1)){
+			selectname=tableName.name.toString();
+		}
+        gs.info('selected tables for choices123' + selectname);
+
+        gs.info('Selected field name: ' + selectedField);
+
+        if (!selectedField) {
+            gs.error('No field name provided in sysparm_fields');
+            return JSON.stringify([]);
+        }
+
+        // Fetch the field type from the sys_dictionary table
+        var field1 = new GlideRecord('sys_dictionary');
+        field1.addQuery('element', selectedField); // Querying by field name (not label)
+        field1.query();
+
+        var fieldType = '';
+        if (field1.next()) {
+            fieldType = field1.getValue('element'); // Retrieve the field's internal name
+            gs.info('Field type (element): ' + fieldType);
+        } else {
+            gs.error('No matching record found in sys_dictionary for element: ' + selectedField);
+            return JSON.stringify([]);
+        }
+
+        // Fetch choices for the specific field from sys_choice
+        var choice = new GlideRecord('sys_choice');
+        //choice.addEncodedQuery('name=selectname^language=en^element=fieldType');
+        choice.addQuery('element', fieldType);
+        choice.addQuery('language', 'en');
+        choice.addQuery('name', selectname.toString()); // Match the specific field type
+        choice.query();
+        gs.info("table name" + selectname);
+        gs.info("field  name" + fieldType);
+
+        while (choice.next()) {
+            var valueofchoices = {};
+            valueofchoices.values = choice.value.toString();
+            valueofchoices.choices = choice.label.toString(); // Retrieve choice label
+            gs.info('vaishmabi choices name: ' + valueofchoices.values);
+            choices.push(valueofchoices); // Add the choice to the array
+        }
+
+        gs.info('Final choice array for field "' + selectedField + '": ' + JSON.stringify(choices));
+        return JSON.stringify(choices);
+    },
+
+    getReferenceData: function() {
+        var referencefield = [];
+        var selectedField = this.getParameter('sysparm_fields'); // User-selected field
+        var selectname = this.getParameter('sysparm_tablename');
+
+    
+		 var table1 = this.getParameter('sysparm_tablename');
+        gs.info('childtable' + table1);
+		var selectname='';
+		var tableName = new GlideRecord('sys_db_object');
+		if(tableName.get(table1)){
+			selectname=tableName.name.toString();
+		}
+		
+
+        gs.info("Table for reference field: " + selectname);
+        gs.info("Field for reference: " + selectedField);
+
+        // Query sys_dictionary to get the reference table
+        var gr = new GlideRecord('sys_dictionary');
+        gr.addQuery('name', 'CONTAINS', selectname).addOrCondition('name', 'task');
+        gr.addQuery('element', selectedField);
+        gr.query();
+        while (gr.next()) {
+            var referenetable = gr.getValue('reference');
+            gs.print("reference field valuebbbbbbbbbb" + referenetable);
+        }
+
+
+        var grRef = new GlideRecord(referenetable);
+        grRef.addQuery('active', 'true');
+        grRef.query();
+
+
+        var displayField = grRef.getDisplayColumn();
+        gs.info("Display field for " + displayField);
+
+
+        if (!displayField) {
+            gs.info("No display field found, checking common fields...");
+            var commonFields = ['name', 'user_name', 'email', 'number'];
+            for (var i = 0; i < commonFields.length; i++) {
+                if (grRef.isValidField(commonFields[i])) {
+                    displayField = commonFields[i];
+                    gs.info("Using common field: " + displayField);
+                    break;
+                }
+            }
+        }
+
+
+        if (!displayField) {
+            gs.info("No common field found, searching sys_dictionary...");
+            var dictGr = new GlideRecord('sys_dictionary');
+            dictGr.addQuery('name', tableName);
+            dictGr.addQuery('internal_type', 'string');
+            dictGr.orderBy('column_label'); // Pick the first one found
+            dictGr.query();
+
+            if (dictGr.next()) {
+                displayField = dictGr.getValue('element');
+                gs.info("Using fallback field: " + displayField);
+            } else {
+                gs.info("No suitable field found, using sys_id.");
+                displayField = 'sys_id';
+            }
+        }
+
+
+        while (grRef.next()) {
+            var name = grRef.getValue(displayField);
+            var userid = grRef.getValue('sys_id');
+
+            gs.info("User ID: " + userid + ", Display Value: " + name);
+            referencefield.push({
+                value: userid,
+                choice: name
+            });
+        }
+
+
+        gs.info("Final reference field data: " + JSON.stringify(referencefield));
+        return JSON.stringify(referencefield);
+    },
+
+
+    getCount: function() {
+        var table = this.getParameter('sysparm_table');
+        var field = this.getParameter('sysparm_field');
+		gs.info("tabke seeeeeeeeee",table);
+		gs.info("table fieldsssssssssssss",field);
+
+        if (!table || !field) {
+            return 0;
+        }
+
+        var gr = new GlideAggregate(table);
+        gr.addAggregate('COUNT', field);
+        gr.query();
+
+        if (gr.next()) {
+            var count =  gr.getAggregate('COUNT', field);
+			gs.info("count incident to count chaty")
+			return count;
+        }
+        return 0;
+    },
+    type: 'seletcedfield'
+
+
+
+});
