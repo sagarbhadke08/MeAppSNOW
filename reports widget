@@ -1,0 +1,1093 @@
+  <button class="export-pdf-btn" ng-click="c.addReport()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+      <path d="M9 17V11H15M9 17H7M9 17H15M15 17V11M15 17H17M13 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V11M13 3L19 9M13 3V7C13 8.10457 13.8954 9 15 9H19" stroke="white" stroke-width="2"/>
+    </svg>
+    Add Report
+  </button>
+  <button class="export-pdf-btn" ng-click="c.exportTABPDF()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+      <path d="M9 17V11H15M9 17H7M9 17H15M15 17V11M15 17H17M13 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V11M13 3L19 9M13 3V7C13 8.10457 13.8954 9 15 9H19" stroke="white" stroke-width="2"/>
+    </svg>
+    Export PDF
+  </button>
+</div>
+
+<div class="no-content-area" ng-show="c.data.chartConfig.length == 0">
+  <h1>There are no reports created in this tab...</h1>
+</div>
+<!--   NEW added -->
+<div class="content-area">
+  <div class="reports-grid" id="reportsGrid">
+    <!-- Responsive charts will be injected here -->
+     <div class="chart-container" ng-repeat="config in c.data.chartConfig" ng-if="config.type !== 'Number'">
+      <!-- Existing chart logic (handled by createChartContainer) -->
+    </div>
+  </div> 
+</div>
+
+<!--   NEW added -->
+CSS /* Grid Container for the charts */
+  .reports-grid {
+ //display: grid;////existing script  
+  display:  flex;//NEW  //arranged dynamically 
+  flex-wrap: wrap;//NEW  //chart adjusted to next line
+  gap: 20px; //gap b/w chart 
+  width: 100%; //box-sizing: border-box;/existing script
+  padding:0 10px;// NEW reduce side padding
+  }
+
+@media (max-width: 768px) {//existing script
+  .reports-grid {
+    grid-template-columns: 1fr 1fr;
+   // grid-template-columns: 1fr;//existing script //comments on 666
+  //  grid-template-columns: auto auto; // 777
+    //flex-direction: column;//666666666666666666
+  }
+}
+/* Add to your widget's CSS */
+.gantt .chart-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.gantt canvas {
+  max-height: 600px !important;
+}
+
+.chartjs-scale-x-axis .tick text {
+  font-size: 12px;
+  color: #666;
+}
+.number-report-container {
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 20px;
+    width: 100%;
+    min-height: 39rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.number-card {
+    font-size: 16rem;
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+    padding: 20px;
+    width: 100%;
+    height: 40rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.number-card .loading-text {
+    font-size: 24px;
+    color: #666;
+    font-weight: normal;
+}
+
+.number-card .error-text {
+    font-size: 18px;
+    color: #e74c3c; /* Red for errors */
+    font-weight: bold;
+}
+/* The top detail header */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  margin-top: 15px;
+  padding: 0 1rem;
+}
+
+/* Buttons in the header */
+.export-pdf-btn {
+  background: #2d3748;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.export-pdf-btn:hover {
+  background: #1a202c;
+}
+
+/* If no charts are present */
+.no-content-area {
+  border: 1px solid #E0E0E0;
+  border-radius: 15px;
+  padding: 20px;
+  width: 140rem;
+  height: 20rem;
+  box-sizing: border-box;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+/* Chart Container */  
+////EXISTING START
+//.chart-container {
+//  border: 1px solid #E0E0E0;
+ // border-radius: 15px;
+ //padding: 20px;
+  //width: 70rem;//EXISTING 
+ // width: 100%;//NEW
+ // min-height: 250px;//NEW
+ // height: 50rem;//EXISTING 
+//  box-sizing: border-box;
+ // display: flex;
+ // flex-direction: column;
+ // transition: all 0.3s ease;
+//}
+//EXISTING END
+
+//NEW START
+.chart-container {
+  flex: 1 1 calc(50% - 20px);  //1  zoom in and 1 zoom out calc(50% - 20px);=chart takes 50% of the width (minus the gap).
+  border: 1px solid #E0E0E0; //thin bprder of chart
+  border-radius: 15px; //round corner
+  padding: 20px;// Adds inner spacing so content isn’t too close to the edges.
+  box-sizing: border-box; // padding and border are included in the total width/height.
+  min-width: 400px; //Ensures charts don't become too small when resizing.
+  max-width: 100%;// Prevents charts from becoming too big on large screens.
+// transition: all 0.3s ease-in-out;//666666666666666666
+ // max-width: calc(50% - 20px);//  777777
+}
+
+.chart-placeholder{ //33333333 start 333333333333333
+flex: 1 1 calc(50% - 20px); /* Takes up space so last chart doesn't stretch */
+  //................start 7
+   border: 1px solid #E0E0E0; //thin bprder of chart
+  border-radius: 15px; //round corner
+  padding: 20px;// Adds inner spacing so content isn’t too close to the edges.
+  box-sizing: border-box; // padding and border are included in the total width/height.
+  min-width: 400px; //Ensures charts don't become too small when resizing.
+  max-width: 100%;
+  //******************* end 7
+   background: transparent; /* Invisible placeholder */
+}
+//3333333333333333  end  33333333333333333333
+
+.chart-container.gantt {
+  flex: 1 1 100% !important; 
+// full width (1 per row). !important: Forces this rule to apply even if another rule tries to change the flex property.
+
+  order: 1;// bottom //6666666666666
+} 
+//7777777777777777 start
+//@media (max-width: 768px) {
+//  .chart-container,
+  //.chart-container.gantt {
+  //  flex: 1 1 100%; /* Full width on smaller screens */
+   // max-width: 100%;
+  //}
+//}
+
+//7777777777 end
+@media (max-width: 768px) {
+  .chart-container {
+    flex: 1 1 100%; /* Full width on smaller screens */
+   max-width: 100%;//3333333333333333333333 //comments 6666666
+  }
+}
+//START  END // 
+
+.chart-container.empty-placeholder {
+  flex: 1 1 calc(50% - 20px);
+// opacity: 0;//6666666666666666666666
+ visibility: hidden;
+}
+@media (max-width: 768px) {
+  .chart-container,
+  .chart-container.empty-placeholder {
+  flex: 1 1 100%; /* Full width in small screens */// 777777777 Ccomments
+ }
+}
+START  END 
+
+//EXISTING SCRIPT START
+/* Maximized state for the chart container */
+.chart-container.maximized {
+  position: fixed;
+  top: 0;
+  left: 0;
+ width: 100% !important;
+  height: 100% !important;
+  z-index: 9999;
+  background-color: white;
+  padding: 20px;
+  overflow: auto;
+}
+//EXISTING SCRIPT  END
+
+//333333333333333333333333333333333333333333333333333333333333333333333
+.chart-container.maximized {
+  position: fixed !important; 
+  top: 5vh !important; 
+ left: 5vw !important; 
+  width: 90vw !important; 
+  height: 90vh !important;
+  z-index: 9999 !important; 
+  background-color: white !important; 
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3) !important; 
+  border-radius: 10px !important;
+  padding: 20px !important; 
+  overflow: auto !important;
+ // transition: all 0.3s ease-in-out !important; //666666666666
+    transform: scale(1.1);
+}
+
+//.chart-container {
+ // transition: all 0.3s ease-in-out !important; /* Smooth in & out */
+//}
+//333333333333333333333333333333333333333333333333333333333333333333333
+/* Chart Header */
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.chart-header .chart-title {
+  flex: 1;
+  font-size: 18px;
+  color: #2C3E50;
+  font-weight: bold;
+}
+
+/* Action Icons container (top-right corner) */
+.chart-header .action-icons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  position: relative; /* For dropdown positioning */
+}
+//6666666666666666 START
+/* Icons */
+//.maximize-icon, .ellipsis-icon {
+ // cursor: pointer;
+ // padding: 5px;
+ // border-radius: 3px;
+//}
+
+//.maximize-icon:hover, .ellipsis-icon:hover {
+//  background-color: #f0f0f0;
+//}
+//66666666666666666 END
+/* Maximize icon with hover */
+.maximize-icon {
+  // position: relative;//....................44444444
+  //z-index: 10; //....................44444444
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 3px;
+}
+.maximize-icon:hover {
+  background-color: #f0f0f0;
+}
+//EXISTING START
+/* Ellipsis icon with hover */
+.ellipsis-icon {
+ cursor: pointer;
+  padding: 5px;
+  border-radius: 3px;
+}
+.ellipsis-icon:hover {
+  background-color: #f0f0f0;
+}
+//EXISTING END
+/* Dropdown menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+/* Dropdown items */
+.dropdown-item {
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
+/* Chart area */
+.chart {
+  flex: 1;
+  position: relative;
+}
+.chart canvas {
+  width: 100% !important;
+  height: 100% !important;
+}, Client controller // Client Controller with fixes
+api.controller = function($scope, $http, spUtil, spModal, $timeout) {
+  var c = this;
+
+  // Function to determine chart container class
+  c.getChartClass = function(chartType) {
+    return chartType === 'gantt' ? 'chart-container gantt' : 'chart-container';
+  };
+
+  // Ensure the global 'data' object exists
+  if (typeof data === "undefined") {
+    var data = {};
+  }
+
+  // Function to open the Add Report modal
+  c.addReport = function() {
+    spModal.open({
+      title: 'Add a New Report',
+      size: 'lg',
+      widget: 'create_report',
+      buttons: [],
+      widgetInput: {
+        sys_id: c.data.tabsObject ? c.data.tabsObject.sys_id : '',
+        tabObject: c.data.tabsObject
+      }
+    });
+  };
+
+  // Function to open the Edit Report modal
+  c.editReport = function(reportConfig) {
+    spModal.open({
+      title: 'Edit Report',
+      size: 'lg',
+      widget: 'edit_report',
+      widgetInput: {
+        sys_id: reportConfig.sys_id
+      },
+      buttons: []
+    });
+  };
+
+  // Export entire tab to PDF
+  c.exportTABPDF = function() {
+    if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+      spUtil.addErrorMessage('PDF export libraries are not loaded. Please try again.');
+      return;
+    }
+    var loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-overlay';
+    loadingDiv.innerHTML = '<div class="loading-spinner">Generating PDF...</div>';
+    document.body.appendChild(loadingDiv);
+    $timeout(function() {
+      loadingDiv.classList.add('active');
+    }, 50);
+
+    var elementsToHide = ['.detail-header', '.dropdown-menu'];
+    var originalStyles = [];
+    elementsToHide.forEach(function(selector) {
+      var elements = document.querySelectorAll(selector);
+      for (var i = 0; i < elements.length; i++) {
+        originalStyles.push({ element: elements[i], display: elements[i].style.display });
+        elements[i].style.display = 'none';
+      }
+    });
+
+    $timeout(function() {
+      var targetElement = document.querySelector('.content-area');
+      html2canvas(targetElement, {
+        scale: 3,
+        useCORS: true,
+        logging: true,
+        allowTaint: true,
+        scrollY: -window.scrollY,
+        backgroundColor: '#ffffff'
+      }).then(function(canvas) {
+        var pdf = new jspdf.jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+        var imgData = canvas.toDataURL('image/jpeg', 1.0);
+        var pageWidth = pdf.internal.pageSize.getWidth();
+        var pageHeight = pdf.internal.pageSize.getHeight();
+        var imgWidth = pageWidth - 20;
+        var imgHeight = (canvas.height * imgWidth) / canvas.width;
+        pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
+        var heightLeft = imgHeight;
+        var position = 10;
+        while (heightLeft >= pageHeight) {
+          position = heightLeft - pageHeight + 10;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 10, -position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+        var tabName = c.data.tabsObject ? c.data.tabsObject.name.replace(/[^a-zA-Z0-9]/g, '-') : 'report';
+        var today = new Date();
+        var day = today.getDate().toString().padStart(2, '0');
+        var month = (today.getMonth() + 1).toString().padStart(2, '0');
+        var year = today.getFullYear();
+        var dateFormatted = day + '/' + month + '/' + year;
+        pdf.save(tabName + '_' + dateFormatted + '.pdf');
+        originalStyles.forEach(function(item) {
+          item.element.style.display = item.display;
+        });
+        loadingDiv.classList.remove('active');
+        $timeout(function() {
+          document.body.removeChild(loadingDiv);
+        }, 300);
+      }).catch(function(error) {
+        console.error('Export failed:', error);
+        originalStyles.forEach(function(item) {
+          item.element.style.display = item.display;
+        });
+        loadingDiv.classList.remove('active');
+        $timeout(function() {
+          document.body.removeChild(loadingDiv);
+        }, 300);
+        spUtil.addErrorMessage('PDF export failed: ' + error.message);
+      });
+    }, 1000);
+  };
+
+  // Listen for tab selection events to update reports
+  $scope.$on('showReports_relatedTotabs', function(event, tabObject) {
+    c.data.tabsObject = tabObject;
+    c.server.update().then(function(response) {
+      c.generateAllCharts();
+    });
+  });
+
+  // Record watch to refresh reports on data changes
+  spUtil.recordWatch($scope, 'x_1069982_report_0_report', '', function(name, data) {
+    c.server.update().then(function(response) {
+      c.generateAllCharts();
+    });
+  });
+
+  // Generate specific colors for charts
+  function generateColors(count) {
+    var colors = [
+      'rgba(128, 0, 128, 0.8)', // Purple
+      'rgba(0, 128, 0, 0.8)',   // Green
+      'rgba(0, 0, 255, 0.8)',   // Blue
+      'rgba(255, 255, 0, 0.8)', // Yellow
+      'rgba(255, 165, 0, 0.8)', // Orange
+      'rgba(255, 192, 203, 0.8)', // Pink
+      'rgba(128, 128, 128, 0.8)', // Gray
+      'rgba(0, 255, 255, 0.8)'  // Cyan
+    ];
+    var result = [];
+    for (var i = 0; i < count; i++) {
+      result.push(colors[i % colors.length]);
+    }
+    return result;
+  }
+//..........................................EXISTING CODE COMMENT
+  // Toggle maximize/minimize chart container
+  //c.toggleMaximize = function(container) {
+  // if (container.classList.contains('maximized')) {
+    //  container.classList.remove('maximized');
+   // } else {
+   //   container.classList.add('maximized');
+   // }
+//  };
+//..............NEW START 4..................
+	c.toggleMaximize = function(container) {
+		 console.log("toggleMaximize function called!");//>>>>>>>>>>4444
+    if (container.classList.contains('maximized')) {
+			console.log("Minimizing...");//>>>>>>>>>>444444
+        container.classList.remove('maximized');
+        document.body.style.overflow = 'auto';  
+    } else {
+			  console.log("Maximizing...");//>>>>>>>>>>>>4444444444
+        container.classList.add('maximized');
+        document.body.style.overflow = 'hidden'; 
+    }
+};
+  
+	//.............NEW END 4...................
+  // Export chart container as JPG
+  c.exportChartJPG = function(container, chartName) {
+    var dropdown = container.querySelector('.dropdown-menu');
+    var originalDisplay = dropdown ? dropdown.style.display : 'block';
+    if (dropdown) dropdown.style.display = 'none';
+
+    html2canvas(container, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    }).then(function(canvas) {
+      var imageData = canvas.toDataURL("image/jpeg", 1.0);
+      var link = document.createElement('a');
+      var today = new Date();
+      var day = today.getDate().toString().padStart(2, '0');
+      var month = (today.getMonth() + 1).toString().padStart(2, '0');
+      var year = today.getFullYear();
+      var dateFormatted = day + '/' + month + '/' + year;
+      link.href = imageData;
+      link.download = chartName.replace(/[^a-zA-Z0-9]/g, '-') + '_' + dateFormatted + '.jpg';
+      link.click();
+      if (dropdown) dropdown.style.display = originalDisplay;
+    }).catch(function(error) {
+      console.error('JPG export failed:', error);
+      if (dropdown) dropdown.style.display = originalDisplay;
+      spUtil.addErrorMessage('JPG export failed: ' + error.message);
+    });
+  };
+
+  // Export chart container as PDF
+  c.exportChartPDF = function(container, chartName) {
+    var dropdown = container.querySelector('.dropdown-menu');
+    var originalDisplay = dropdown ? dropdown.style.display : 'block';
+    if (dropdown) dropdown.style.display = 'none';
+
+    html2canvas(container, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    }).then(function(canvas) {
+      var imgData = canvas.toDataURL("image/jpeg", 1.0);
+      if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+        alert('jsPDF library is not loaded');
+        if (dropdown) dropdown.style.display = originalDisplay;
+        return;
+      }
+      var pdf = new window.jspdf.jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width / 3, canvas.height / 3]
+      });
+      pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 3, canvas.height / 3);
+      var today = new Date();
+      var day = today.getDate().toString().padStart(2, '0');
+      var month = (today.getMonth() + 1).toString().padStart(2, '0');
+      var year = today.getFullYear();
+      var dateFormatted = day + '/' + month + '/' + year;
+      pdf.save(chartName.replace(/[^a-zA-Z0-9]/g, '-') + '_' + dateFormatted + '.pdf');
+      if (dropdown) dropdown.style.display = originalDisplay;
+    }).catch(function(error) {
+      console.error('PDF export failed:', error);
+      if (dropdown) dropdown.style.display = originalDisplay;
+      spUtil.addErrorMessage('PDF export failed: ' + error.message);
+    });
+  };
+
+  // Helper function to create chart container
+  function createChartContainer(config, index) {
+    var container = document.createElement('div');
+    container.className = c.getChartClass(config.type);
+		//6666666666666666666666666666  START
+	
+    //if (config.type === 'gantt') {
+     // container.style.flex = '1 1 100%'; // Full-width for Gantt chart
+    //} else {
+     // container.style.flex = '1 1 calc(50% - 20px)'; // Two charts per row
+   // }
+		//6666666666666666666666666666 END
+ //if (config.type !== 'gantt') {
+   //   container.style.flex = '1 1 calc(50% - 20px)'; /* <<<<< 7777MODIFIED */
+    //}
+		//77777777777777777777777777
+		
+		
+    var header = document.createElement('div');
+    header.className = 'chart-header';
+
+    var title = document.createElement('div');
+    title.className = 'chart-title';
+    title.innerHTML = config.name;
+    header.appendChild(title);
+
+    var actions = document.createElement('div');
+    actions.className = 'action-icons';
+
+    var maximizeIcon = document.createElement('div');
+    maximizeIcon.className = 'maximize-icon';
+    maximizeIcon.innerHTML = '⤢';
+    maximizeIcon.onclick = function(event) {
+			 console.log("Maximize icon clicked!"); //>>>>444444>>>>>>>
+      event.stopPropagation();
+      //c.toggleMaximize(container);//comments existing 
+			 c.toggleMaximize(this.closest('.chart-container'));//>>>>>>>4444
+    };
+    actions.appendChild(maximizeIcon);
+
+    var ellipsisIcon = document.createElement('div');
+    ellipsisIcon.className = 'ellipsis-icon';
+    ellipsisIcon.innerHTML = '☰';
+    actions.appendChild(ellipsisIcon);
+
+    header.appendChild(actions);
+    container.appendChild(header);
+
+    var chartDiv = document.createElement('div');
+    chartDiv.className = 'chart';
+    var canvas = document.createElement('canvas');
+    canvas.id = 'chart_' + index;
+    canvas.height = '400px';
+    canvas.width = '400px';
+    chartDiv.appendChild(canvas);
+    container.appendChild(chartDiv);
+
+    var dropdown = document.createElement('div');
+    dropdown.className = 'dropdown-menu';
+    dropdown.style.display = 'none';
+
+    var editOption = document.createElement('div');
+    editOption.className = 'dropdown-item';
+    editOption.innerHTML = 'Edit';
+    editOption.onclick = function(event) {
+      event.stopPropagation();
+      c.editReport(config);
+      dropdown.style.display = 'none';
+    };
+    dropdown.appendChild(editOption);
+
+    var exportPdfOption = document.createElement('div');
+    exportPdfOption.className = 'dropdown-item';
+    exportPdfOption.innerHTML = 'Export to PDF';
+    exportPdfOption.onclick = function(event) {
+      event.stopPropagation();
+      c.exportChartPDF(container, config.name);
+      dropdown.style.display = 'none';
+    };
+    dropdown.appendChild(exportPdfOption);
+
+    var exportJpgOption = document.createElement('div');
+    exportJpgOption.className = 'dropdown-item';
+    exportJpgOption.innerHTML = 'Export to JPG';
+    exportJpgOption.onclick = function(event) {
+      event.stopPropagation();
+      c.exportChartJPG(container, config.name);
+      dropdown.style.display = 'none';
+    };
+    dropdown.appendChild(exportJpgOption);
+
+    actions.appendChild(dropdown);
+
+    ellipsisIcon.onclick = function(event) {
+      event.stopPropagation();
+      dropdown.style.display = (dropdown.style.display === 'none') ? 'block' : 'none';
+    };
+
+    document.addEventListener('click', function(event) {
+      if (!actions.contains(event.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    return { container: container, canvas: canvas };
+  }
+
+  // Generate all charts dynamically
+c.generateAllCharts = function() {
+  var parent = document.getElementById('reportsGrid');
+  if (!parent) return;
+  parent.innerHTML = '';
+
+  if (!c.data.chartConfig.length) {
+    var container2 = document.createElement('div');
+    container2.className = 'no-chart-container';
+    container2.innerHTML = 'There are no reports created in this tab.';
+    parent.appendChild(container2);
+    return;
+  }
+
+  for (var i = 0; i < c.data.chartConfig.length; i++) {
+    (function(index) {
+      var config = c.data.chartConfig[index];
+      var chartElements = createChartContainer(config, index);
+      var container = chartElements.container;
+      var canvas = chartElements.canvas;
+      parent.appendChild(container);
+			
+			if (config.type === 'number') {
+        // Remove the canvas (not needed for number charts) and its wrapper
+        var chartDiv = container.querySelector('.chart');
+        if (chartDiv) chartDiv.remove();
+
+        // Create and append the number card
+        var numberCard = document.createElement('div');
+        numberCard.className = 'number-card';
+        numberCard.innerHTML = '<span class="loading-text">Loading...</span>';
+        container.appendChild(numberCard);
+
+        // Fetch the number data
+        var gaNumber = new GlideAjax("global.getChartRevamp");
+        gaNumber.addParam("sysparm_name", "getNumber");
+        gaNumber.addParam("sysparm_table", config.table);
+        gaNumber.addParam("sysparm_query", config.query || '');
+        gaNumber.getXMLAnswer(function(response) {
+          var count = response;
+          numberCard.innerHTML = count;
+        });}
+      else if (config.type === 'gantt') {
+        var gaTasks = new GlideAjax("global.getChartRevamp");
+        gaTasks.addParam("sysparm_name", "getTasks");
+        gaTasks.addParam("sysparm_table", config.table);
+        gaTasks.addParam("sysparm_sdate", config.startDate);
+        gaTasks.addParam("sysparm_edate", config.endDate);
+        gaTasks.addParam("sysparm_query", config.query || '');
+        gaTasks.getXMLAnswer(function(response) {
+          var tasks = JSON.parse(response);
+          initializeGanttChart(canvas, tasks);
+        });
+      } else if (config.type === 'mixed') {
+        var gaChart = new GlideAjax("global.getChartRevamp");
+        gaChart.addParam("sysparm_name", "getChart"); // Fixed to use "getChart"
+        gaChart.addParam("sysparm_tables", config.table);
+        gaChart.addParam("sysparm_fields", config.field);
+        gaChart.addParam("sysparm_query", config.query || '');
+        gaChart.getXMLAnswer(function(response) {
+          var res = JSON.parse(response);
+          var ctx = canvas.getContext("2d");
+          initializeMixedChart(ctx, res);
+        });
+      } else {
+        var gaChart = new GlideAjax("global.getChartRevamp");
+        gaChart.addParam("sysparm_name", "getChart");
+        gaChart.addParam("sysparm_tables", config.table);
+        gaChart.addParam("sysparm_fields", config.field);
+        gaChart.addParam("sysparm_query", config.query || '');
+        gaChart.getXMLAnswer(function(response) {
+          var res = JSON.parse(response);
+          var ctx = canvas.getContext("2d");
+          initializeStandardChart(ctx, config.type, res);
+        });
+      }
+    })(i);
+  }
+};
+
+  // Initialize Gantt Chart with fixed tooltip
+  function initializeGanttChart(canvas, tasks) {
+    var ctx = canvas.getContext("2d");
+    
+    // Format dates for better display
+    tasks.forEach(function(task) {
+      task.startObj = new Date(task.start);
+      task.endObj = new Date(task.end);
+    });
+    
+    // Find min and max dates for better scale
+    var minDate = tasks.length > 0 ? new Date(tasks[0].start) : new Date();
+    var maxDate = tasks.length > 0 ? new Date(tasks[0].end) : new Date();
+    
+    tasks.forEach(function(task) {
+      var startDate = new Date(task.start);
+      var endDate = new Date(task.end);
+      if (startDate < minDate) minDate = startDate;
+      if (endDate > maxDate) maxDate = endDate;
+    });
+    
+    // Add padding to date range
+    minDate.setDate(minDate.getDate() - 7);
+    maxDate.setDate(maxDate.getDate() + 7);
+    
+    var config = {
+      type: 'bar',
+      data: {
+        labels: tasks.map(function(task) { return task.id; }),
+        datasets: [{
+          label: 'Tasks',
+          data: tasks.map(function(task) {
+            return {
+              x: [task.startObj, task.endObj],
+              y: task.id,
+              // Store original dates for tooltip
+              _start: task.start,
+              _end: task.end
+            };
+          }),
+          backgroundColor: tasks.map(function(task) { return task.color; }),
+          borderWidth: 1,
+          borderColor: '#2c3e50',
+          borderSkipped: false,
+          borderRadius: 6,
+          barThickness: 20
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                var dataPoint = context.raw;
+                // Format dates nicely for tooltip
+                var startDate = new Date(dataPoint._start);
+                var endDate = new Date(dataPoint._end);
+                var formatDate = function(date) {
+                  return date.toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  });
+                };
+                return [
+                  'Start: ' + formatDate(startDate),
+                  'End: ' + formatDate(endDate),
+                  'Duration: ' + Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + ' days'
+                ];
+              }
+            }
+          },
+          datalabels: {
+            display: true,
+            color: '#fff',
+            //font: {
+            //  weight: 'bold'
+        //    },
+            formatter: function(value, context) {
+              var startDate = new Date(value.x[0]);
+              var endDate = new Date(value.x[1]);
+              var days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+              return days + 'd';
+            },
+            anchor: 'center',
+            align: 'center'
+          }
+        },
+        scales: {
+          x: {
+            type: 'time',
+            time: { 
+              unit: 'day',
+              displayFormats: {
+                day: 'MMM d'
+              }
+            },
+            position: 'top',
+            min: minDate,
+            max: maxDate,
+            title: {
+              display: true,
+              text: 'Timeline'
+            }
+          },
+          y: {
+            type: 'category',
+            title: {
+              display: true,
+              text: 'Tasks'
+            },
+            ticks: { 
+              autoSkip: false
+            }
+          }
+        }
+      }
+    };
+    new Chart(ctx, config);
+  }
+
+  // Initialize Mixed Chart (Bar + Line)
+  function initializeMixedChart(ctx, data) {
+    var colors = generateColors(data.states.length);
+    
+    var chartConfig = {
+      type: 'bar',
+      data: {
+        labels: data.states,
+        datasets: [
+          {
+            label: 'Count',
+            data: data.counts,
+            backgroundColor: colors,
+            borderColor: colors.map(function(color) {
+              return color.replace('0.8', '1');
+            }),
+            borderWidth: 1,
+            order: 2
+          },
+          {
+            label: 'Trend',
+            data: data.counts,
+            type: 'line',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+            pointRadius: 5,
+            fill: false,
+            tension: 0.4,
+            order: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          datalabels: {
+            color: function(context) {
+              return context.dataset.type === 'line' ? '#36a2eb' : '#fff';
+            },
+            anchor: function(context) {
+              return context.dataset.type === 'line' ? 'end' : 'center';
+            },
+            align: function(context) {
+              return context.dataset.type === 'line' ? 'top' : 'center';
+            },
+            font: {
+              weight: 'bold'
+            },
+            formatter: function(value, context) {
+              return value;
+            },
+            display: function(context) {
+              return true; // Show all data labels
+            }
+          },
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Count'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: data.states.length > 0 ? 'Categories' : ''
+            }
+          }
+        }
+      }
+    };
+    
+    new Chart(ctx, chartConfig);
+  }
+
+  // Initialize Standard Charts (Doughnut, Pie, Bar, Line)
+ function initializeStandardChart(ctx, chartType, data) {
+  var chartConfig = {
+    type: chartType,
+    data: {
+      labels: data.states,
+      datasets: [{
+        label: 'Dataset',
+        data: data.counts,
+        backgroundColor: generateColors(data.states.length),
+        borderColor: chartType === 'line' ? generateColors(1)[0] : undefined,
+        fill: chartType === 'line' ? false : true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        datalabels: {
+          color: '#000000', // Set to black for all cases
+          anchor: chartType === 'line' ? 'end' : 'center',
+          align: chartType === 'line' ? 'top' : 'center',
+          formatter: function(value, context) {
+            return value; // Show only the count, no percentage
+          },
+          font: {
+            weight: 'bold'
+          },
+          display: true
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              var label = context.label || '';
+              var value = context.raw;
+              if (['pie', 'doughnut'].includes(chartType)) {
+                var sum = context.dataset.data.reduce(function(a, b) {
+                  return a + b;
+                }, 0);
+                var percentage = Math.round((value / sum) * 100);
+                return label + ': ' + value + ' (' + percentage + '%)';
+              }
+              return label + ': ' + value;
+            }
+          }
+        }
+      }
+    }
+  };
+
+  if (chartType === 'doughnut') {
+    chartConfig.options.cutout = '50%';
+  }
+
+  new Chart(ctx, chartConfig);
+}
+
+  // Load external libraries
+  function loadScripts(callback) {
+    var scripts = [
+      { url: 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js' },
+      { url: 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js' },
+      { url: 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js' }
+    ];
+
+    var loaded = 0;
+    scripts.forEach(function(script) {
+      var s = document.createElement('script');
+      s.src = script.url;
+      s.onload = function() {
+        if (script.url.includes('chartjs-plugin-datalabels')) {
+          Chart.register(ChartDataLabels);
+        }
+        if (++loaded === scripts.length) callback();
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  loadScripts(function() {
+    console.log('All scripts loaded and datalabels registered.');
+    c.generateAllCharts();
+  });
+};
+(function() {
+    data.chartConfig = [];
+    if (input && input.tabsObject) {
+        var gr = new GlideRecord("x_1069982_report_0_report");
+        gr.addQuery('tab', input.tabsObject.sys_id);
+        gr.addQuery('active', true);
+        gr.query();
+        while (gr.next()) {
+            var obj = {
+                name: gr.name.toString(),
+                table: gr.table.name.getDisplayValue().toLowerCase(),
+                field: gr.field.getDisplayValue().toLowerCase(),
+                type: gr.type.getDisplayValue().toLowerCase(),
+                query: gr.encoded_query.toString().toLowerCase(),
+                startDate: gr.start_date ? gr.start_date.toString() : 'sys_created_on', // Map to a valid date field
+                endDate: gr.end_date ? gr.end_date.toString() : 'sys_updated_on',     // Map to a valid date field
+                sys_id: gr.sys_id.toString()
+            };
+            data.chartConfig.push(obj);
+        }
+    }
+})();
