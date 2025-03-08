@@ -1,0 +1,255 @@
+<div class="dashboard-tabs" ng-if="c.data.tabs">
+    <div class="tabs">
+        <div class="tab" 
+             ng-repeat="tab in c.data.tabs" 
+             ng-click="c.setActiveTab(tab)" 
+             ng-class="{'active': c.isActiveTab(tab)}">
+            {{tab.name}}
+          <span class="icon icon-edit" aria-hidden="true" ng-click="c.openEditTabModal(tab.sys_id)"></span>
+        </div>
+              <!-- Default 'new tab' 
+        <div class="tab" 
+             ng-if="!c.data.tabs.length" 
+             ng-class="{'active': c.isActiveTab(c.defaultTab)}">
+            {{c.defaultTab.name}}
+           <span class="icon icon-edit" aria-hidden="true"></span>
+        </div>-->
+        <div class="add-tab" ng-click="c.addTab(c.data.sys_id)">+</div>
+    </div>
+
+    <div class="content-area">
+        <!-- Tab content here -->
+       <widget id="reports_widget"></widget>
+    </div>
+</div>
+
+.dashboard-tabs {
+    width: 100%;
+}
+
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #E0E0E0;
+    margin-bottom: 20px;
+}
+
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #95A5A6;
+    position: relative;
+}
+
+.tab:hover {
+    color: black;
+    border-bottom: 4px solid #808080;
+}
+
+.active {
+    color: #2C3E50;
+    font-weight: bold;
+    border-bottom: 4px solid #333333;
+    min-width: 100px; /* Ensures consistent width */
+    text-align: center;
+}
+
+.add-tab {
+    background-color: black;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px;
+    margin-right: 20px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.content-area {
+    display: grid;
+    gap: 20px;
+}
+
+.add-report {
+    flex: 1;
+    border: 2px dashed #95A5A6;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    cursor: pointer;
+}
+
+.add-report-icon {
+    width: 50px;
+    height: 50px;
+    background-color: black;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.chart-container {
+    flex: 1;
+    border: 1px solid #E0E0E0;
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.chart-title {
+    font-size: 18px;
+    color: #2C3E50;
+    font-weight: bold;
+}
+
+.edit-icon {
+    cursor: pointer;
+    color: #95A5A6;
+}
+
+.chart {
+    height: 400px;
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    padding: 20px 0;
+}
+
+sERVEVR SIDE scripts
+(function() {
+	//var dashboardID = input.sys_id || options.sys_id || '';
+
+  if (input) {    
+	var tabs = [];
+        var tabGR = new GlideRecord('x_1069982_report_0_tabs');
+        tabGR.addQuery('dashboard', input.sys_id);
+        tabGR.query();
+        while (tabGR.next()) {
+            tabs.push({
+                name: tabGR.getValue('name'),
+                sys_id: tabGR.getValue('sys_id'),
+                dashboardSysId: tabGR.getValue('dashboard'),
+            });
+        }
+        data.tabs = tabs;
+		}
+})();
+
+Client controller
+api.controller = function($scope, spUtil, spModal, $rootScope, $timeout) {
+    var c = this;
+
+    c.$onInit = function() {
+        $scope.$applyAsync(function() {
+            if (c.data.tabs && c.data.tabs.length > 0) {
+                c.setActiveTab(c.data.tabs[0]);
+            } else {
+                c.setActiveTab(c.defaultTab);
+            }
+        });
+    };
+
+    spUtil.recordWatch($scope, 'x_1069982_report_0_tabs', '', function(name, data) {
+        console.log(name);
+        console.log(data);
+        c.server.update($scope); // Refresh widget data
+    });
+
+    c.defaultTab = {
+        name: "New Tab"
+    };
+
+    c.setActiveTab = function(tab) {
+        console.log(tab);
+        c.activeTab = tab;
+        setTimeout(function() {
+            $rootScope.$broadcast('showReports_relatedTotabs', tab);
+        }, 300);
+        //	$rootScope.$broadcast('showReports_relatedTotabs', tab);
+    };
+
+    c.isActiveTab = function(tab) {
+        return c.activeTab === tab;
+    };
+
+    c.addTab = function(dashboardSysId) {
+        spModal.open({
+            title: 'Add a New Tab',
+            size: 'lg',
+            widget: 'create_tab',
+            widgetInput: {
+                sys_id: dashboardSysId
+            },
+            buttons: []
+        }).then(function() {
+            c.server.update().then(function(response) {
+                $scope.$applyAsync(function() {
+                    if (response.data.tabs && response.data.tabs.length > 0) {
+                        c.setActiveTab(response.data.tabs[response.data.tabs.length - 1]); // Set last tab as active
+                    }
+                });
+            });
+
+        });
+
+    };
+
+
+    c.addReport = function() {
+        spModal.open({
+            title: 'Add a New Report',
+            size: 'lg',
+            widget: 'create_report',
+            buttons: [],
+
+        });
+    }
+
+    $scope.$on('dashboard_selected_tabs', function(event, sys_id) {
+        c.data.sys_id = sys_id;
+        c.server.update().then(function(response) {
+            $scope.$applyAsync(function() {
+                if (c.data.tabs && c.data.tabs.length > 0) {
+                    c.setActiveTab(c.data.tabs[0]);
+                } else {
+                    c.setActiveTab(c.defaultTab);
+                }
+            });
+        });
+    });
+
+    c.openEditTabModal = function(tabSysId) {
+        //alert(tabSysId);
+        $scope.selectedSysId = tabSysId;
+        spModal.open({
+            title: "Edit Tab",
+            size: 'lg',
+            widget: "edit_tab",
+            widgetInput: {
+                sys_id: $scope.selectedSysId
+            },
+            buttons: []
+        }).then(function() {
+            c.server.update();
+        });
+    };
+};
+
