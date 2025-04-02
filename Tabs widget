@@ -1,3 +1,744 @@
+I Making an application in the serivce portal side in which user can create a dashboard and add the reports and for that i have used chartjs
+Here is a widget lists
+for landing page
+widget Name - Dashboard-widget
+HTML Code 
+<main class="dashboard-section" ng-class="{'hidden': c.showDetailWidget}">
+  <div class="dashboard-header">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+      <path d="M3 9L12 2L21 9V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V9Z" stroke="#2D3748" stroke-width="2"/>
+    </svg>
+    <h1 class="dashboard-title">Dashboards</h1>
+    <div class="search-box">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#94A3B8" stroke-width="2"/>
+      </svg>
+      <!-- Bind to c.searchText and trigger searchDashboards on keyup -->
+			<input type="text" class="search-input" ng-model="c.searchText" placeholder="Enter the term" ng-keyup="c.searchDashboards()">
+    </div>
+    
+  </div>
+  <div class="dashboard-container">
+    <div class="dashboard-grid">
+      <div class="dashboard-card add-dashboard">
+        <div class="add-icon" ng-click="c.openWidgetModal()">+</div>
+        <span>Add Dashboard</span>
+      </div>
+      <!-- List dashboards from c.data.dashboards -->
+      <div class="dashboard-card" ng-repeat="dashboard in c.data.dashboards">
+        <div class="card-content" ng-click="c.openDashboardWithTabs(dashboard.sys_id)">
+          <div style="position: relative; padding-left: 15px; margin-bottom: 20px;">
+            <div class="card-indicator"></div>
+            <h3 class="card-title">{{dashboard.name}}</h3>
+          </div>
+          <p class="card-description">{{dashboard.description}}</p>
+        </div>
+        <div class="card-footer">
+          <div class="owned-by">Owned By</div>
+          <div class="owner-name">
+            <span ng-if="dashboard.owned_by">{{dashboard.owned_by}}</span>
+            <span ng-if="!dashboard.owned_by" class="no-owner">This dashboard does not contain any owner</span>
+          </div>
+        </div>
+        <div class="card-footer-edit">
+          <div style="min-height: 32px; display: flex; align-items: center;">
+            <svg class="edit-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" 
+              ng-click="c.openEditDashboardModal(dashboard.sys_id)" ng-if="dashboard.editor">
+              <path d="M11 4H4C3.44772 4 3 4.44772 3 5V20C3 20.5523 3.44772 21 4 21H19C19.5523 21 20 20.5523 20 20V13M18.5858 2.58579C19.3668 1.80474 20.6332 1.80474 21.4142 2.58579C22.1953 3.36683 22.1953 4.63316 21.4142 5.41421L11.8284 15H9L9 12.1716L18.5858 2.58579Z" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="dashboard-detail" ng-class="{'hidden': !c.showDetailWidget}">
+  <div class="detail-header">
+    <div class="back-button" ng-click="c.backToDashboards()">
+      <svg class="back-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M15 18L9 12L15 6" stroke="#2d3748" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span class="back-text">Back to Dashboards</span>
+    </div>
+  </div>
+  <widget id="dashboard_widget_tabs"></widget>
+</div>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  body {
+    background: #f5f6f8;
+    padding: 20px;
+  }
+  .dashboard-section {
+    padding: 20px;
+  }
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+  .dashboard-title {
+    font-size: 24px;
+    color: #2d3748;
+    font-weight: 600;
+  }
+  .search-box {
+    margin-left: auto;
+    position: relative;
+  }
+  .search-input {
+    padding: 8px 35px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    width: 300px;
+    font-size: 14px;
+  }
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+  }
+  .dashboard-container {
+    border: 2px solid #d8dfeb;
+    border-radius: 3rem;
+    padding: 1rem 3rem;
+    align-items: center;
+  }
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+  }
+  .dashboard-card {
+    background: white;
+    border-radius: 2rem;
+    border: 0.2rem solid #2d3748;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+    width: 100%;
+  }
+  .add-dashboard {
+    border: 0.3rem dashed #2d3748;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    cursor: pointer;
+  }
+  .add-dashboard:hover {
+    border-color: #94a3b8;
+  }
+  .add-icon {
+    width: 40px;
+    height: 40px;
+    background: #000;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    font-size: 24px;
+  }
+  .card-content {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-title {
+    color: #1a202c;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .card-indicator {
+    width: 3px;
+    height: 24px;
+    background: #8dc64d;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .card-description {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.4;
+    margin: auto;
+    text-align: center;
+    padding: 0 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
+  }
+  /* Header container for Back and Export buttons */
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    margin-top: 15px;
+    padding: 0 1rem;
+  }
+  .back-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d3748;
+    padding: 0.5rem 1rem;
+    border: 2px solid #2d3748;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: all 0.3s ease;
+    max-width: fit-content;
+  }
+  .back-button:hover {
+    background-color: #2d3748;
+    color: white;
+    border-color: #2d3748;
+  }
+  .back-icon {
+    width: 24px;
+    height: 24px;
+    transition: all 0.3s ease;
+  }
+  .back-button:hover .back-icon {
+    stroke: white;
+  }
+  .back-text {
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .export-pdf-btn {
+    background: #2d3748;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  .export-pdf-btn:hover {
+    background: #1a202c;
+  }
+  /* Hide elements with the .no-export class */
+  .no-export {
+    display: none;
+  }
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .loading-overlay.active {
+    opacity: 1;
+  }
+  .loading-spinner {
+    font-size: 16px;
+    color: #2d3748;
+    font-weight: 500;
+  }
+  .card-footer {
+    padding: 10px 15px;
+    background: #2d3748;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80px;
+  }
+  .card-footer-edit {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 40px;
+  }
+  .card-footer-edit svg {
+    visibility: hidden;
+  }
+  .card-footer-edit svg[ng-if] {
+    visibility: visible;
+  }
+  @media (max-width: 768px) {
+    .dashboard-grid {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    .dashboard-card {
+      height: 250px;
+    }
+    .card-title {
+      font-size: 14px;
+    }
+    .card-description {
+      font-size: 11px;
+      padding: 0 10px;
+    }
+    .card-footer {
+      padding: 8px 10px;
+    }
+  }
+  @media (max-width: 480px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .dashboard-card {
+      height: 220px;
+    }
+  }
+
+Server side code 
+(function() {
+  var dashboards = [];
+	var reportMeUtils = new x_1069982_report_0.reportMeUtilsServer();
+	dashboards = reportMeUtils.getDashboards();
+  data.dashboards = dashboards;
+  //gs.addInfoMessage(data.dashboards);
+	console.log(data.dashboards);
+})();
+if (input && input.name) {  // Ensure a name is entered before inserting
+    var gr = new GlideRecord('x_1069982_report_0_dashboard');
+    gr.initialize();
+    gr.name = input.name;  // Set only if a name is provided
+    gr.insert();
+}
+Client side code 
+ api.controller = function(spModal, spUtil, $scope, $timeout, $rootScope) {
+     var c = this;
+     $scope.selectedSysId = null;
+
+     /**/
+     // Ensure the initial list is available from the server-side script.
+     // Save a copy so we can restore if the search text is cleared.
+     c.originalDashboards = angular.copy(c.data.dashboards || []);
+
+     // Use a single source of truth for the search input.
+     c.searchText = "";
+
+     // Search function: called on ng-keyup from the search input.
+     c.searchDashboards = function() {
+         // Show loading state if needed
+         c.isSearching = true;
+
+         // If the search text is empty, restore the original dashboards
+         if (!c.searchText.trim()) {
+             c.data.dashboards = angular.copy(c.originalDashboards);
+             c.isSearching = false;
+             return;
+         }
+
+         var ga = new GlideAjax('DashboardSearch');
+         ga.addParam('sysparm_name', 'searchDashboards');
+         ga.addParam('sysparm_query', c.searchText);
+
+         ga.getXMLAnswer(function(response) {
+             try {
+                 var dashboards = JSON.parse(response);
+                 // Update the dashboards on the widget
+                 $scope.$apply(function() {
+                     c.data.dashboards = dashboards;
+                     c.isSearching = false;
+                 });
+             } catch (error) {
+                 console.error("Error parsing response:", error);
+                 spUtil.addErrorMessage("Error searching dashboards. Please try again.");
+                 c.isSearching = false;
+                 $scope.$apply();
+             }
+         });
+     };
+
+
+     spUtil.recordWatch($scope, 'x_1069982_report_0_dashboard', "active=true", function(name, data) {
+         console.log(name, data);
+         c.server.update($scope);
+     });
+
+     c.openWidgetModal = function(widgetId, widgetInput) {
+         spModal.open({
+             title: 'Create A New Dashboard',
+             size: 'lg',
+             widget: "create_dashboard",
+             buttons: [],
+             widgetInput: widgetInput || {}
+         }).then(function() {
+             console.log('widget dismissed');
+             window.close();
+         });
+     };
+
+     // Inject html2canvas and jsPDF via CDN if not already loaded
+     c.injectCDN = function() {
+         if (!document.getElementById('html2canvas-script')) {
+             var html2canvasScript = document.createElement('script');
+             html2canvasScript.id = 'html2canvas-script';
+             html2canvasScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+             html2canvasScript.onload = function() {
+                 console.log('html2canvas loaded');
+             };
+             document.head.appendChild(html2canvasScript);
+         }
+         if (!document.getElementById('jspdf-script')) {
+             var jspdfScript = document.createElement('script');
+             jspdfScript.id = 'jspdf-script';
+             jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+             jspdfScript.onload = function() {
+                 console.log('jsPDF loaded');
+             };
+             document.head.appendChild(jspdfScript);
+         }
+     };
+
+     // Call the CDN injection on widget load
+     c.injectCDN();
+
+     // Export PDF functionality with smooth loading overlay and hiding header from the export
+     /* c.exportDashboardPDF = function() {
+        if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+          spUtil.addErrorMessage('PDF export libraries are not loaded. Please try again.');
+          return;
+        }
+
+        // Create and show the loading overlay
+        var loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-overlay';
+        loadingDiv.innerHTML = '<div class="loading-spinner">Generating PDF...</div>';
+        document.body.appendChild(loadingDiv);
+        $timeout(function() {
+          loadingDiv.classList.add('active');
+        }, 50);
+
+        // Hide the header (which contains both Back and Export buttons) from the exported PDF
+        var detailHeader = document.querySelector('.detail-header');
+        var originalDisplay;
+        if (detailHeader) {
+          originalDisplay = detailHeader.style.display;
+          detailHeader.classList.add('no-export'); // no-export sets display: none;
+        }
+
+        // Delay to allow the overlay to show and DOM changes to take effect
+        $timeout(function() {
+          var targetElement = document.querySelector('.dashboard-detail');
+          html2canvas(targetElement, {
+            scale: 1.5,
+            useCORS: true,
+            logging: true,
+            allowTaint: true,
+            scrollY: -window.scrollY
+          }).then(function(canvas) {
+            var pdf = new jspdf.jsPDF({
+              orientation: 'landscape',
+              unit: 'mm',
+              format: 'a4'
+            });
+            var imgData = canvas.toDataURL('image/jpeg', 0.8);
+            var imgWidth = 280;
+            var imgHeight = canvas.height * imgWidth / canvas.width;
+            pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
+            pdf.save('dashboard-export-' + new Date().toISOString() + '.pdf');
+
+            // Restore the header
+            if (detailHeader) {
+              detailHeader.classList.remove('no-export');
+              detailHeader.style.display = originalDisplay;
+            }
+            loadingDiv.classList.remove('active');
+            $timeout(function() {
+              document.body.removeChild(loadingDiv);
+            }, 300);
+          }).catch(function(error) {
+            console.error('Export failed:', error);
+            if (detailHeader) {
+              detailHeader.classList.remove('no-export');
+              detailHeader.style.display = originalDisplay;
+            }
+            loadingDiv.classList.remove('active');
+            $timeout(function() {
+              document.body.removeChild(loadingDiv);
+            }, 300);
+            spUtil.addErrorMessage('PDF export failed: ' + error.message);
+          });
+        }, 1000);
+      };*/
+     c.exportDashboardPDF = function() {
+         if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+             spUtil.addErrorMessage('PDF export libraries are not loaded. Please try again.');
+             return;
+         }
+
+         // Create and show the loading overlay
+         var loadingDiv = document.createElement('div');
+         loadingDiv.className = 'loading-overlay';
+         loadingDiv.innerHTML = '<div class="loading-spinner">Generating PDF...</div>';
+         document.body.appendChild(loadingDiv);
+         $timeout(function() {
+             loadingDiv.classList.add('active');
+         }, 50);
+
+         // Hide elements we don't want in the export
+         var elementsToHide = [
+             '.detail-header', // Header with buttons
+             '.dashboard-tabs > .tabs', // Tabs navigation
+             '.add-tab' // Add tab button
+         ];
+
+         var originalStyles = [];
+         elementsToHide.forEach(function(selector) {
+             var elements = document.querySelectorAll(selector);
+             for (var i = 0; i < elements.length; i++) {
+                 originalStyles.push({
+                     element: elements[i],
+                     display: elements[i].style.display
+                 });
+                 elements[i].style.display = 'none';
+             }
+         });
+
+         // Target only the reports content area
+         $timeout(function() {
+             var targetElement = document.querySelector('.dashboard-tabs .content-area');
+
+             html2canvas(targetElement, {
+                 scale: 1.2, // Reduced scale for smaller file size
+                 useCORS: true,
+                 logging: true,
+                 allowTaint: true,
+                 scrollY: -window.scrollY,
+                 backgroundColor: '#ffffff' // Force white background
+             }).then(function(canvas) {
+                 var pdf = new jspdf.jsPDF({
+                     orientation: 'portrait', // Changed to portrait for better report layout
+                     unit: 'mm',
+                     format: 'a4',
+                     compress: true
+                 });
+
+                 var imgData = canvas.toDataURL('image/jpeg', 0.7); // Lower quality for smaller size
+                 var pageWidth = pdf.internal.pageSize.getWidth();
+                 var pageHeight = pdf.internal.pageSize.getHeight();
+
+                 // Calculate dimensions to maintain aspect ratio
+                 var imgWidth = pageWidth - 20; // 10mm margins on both sides
+                 var imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                 // Add first page
+                 pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
+
+                 // Add additional pages if content is too long
+                 var heightLeft = imgHeight;
+                 var position = 10;
+
+                 while (heightLeft >= pageHeight) {
+                     position = heightLeft - pageHeight + 10;
+                     pdf.addPage();
+                     pdf.addImage(imgData, 'JPEG', 10, -position, imgWidth, imgHeight);
+                     heightLeft -= pageHeight;
+                 }
+
+                 pdf.save('report-export-' + new Date().toISOString() + '.pdf');
+
+                 // Restore hidden elements
+                 for (var j = 0; j < originalStyles.length; j++) {
+                     originalStyles[j].element.style.display = originalStyles[j].display;
+                 }
+
+                 loadingDiv.classList.remove('active');
+                 $timeout(function() {
+                     document.body.removeChild(loadingDiv);
+                 }, 300);
+             }).catch(function(error) {
+                 console.error('Export failed:', error);
+                 for (var k = 0; k < originalStyles.length; k++) {
+                     originalStyles[k].element.style.display = originalStyles[k].display;
+                 }
+                 loadingDiv.classList.remove('active');
+                 $timeout(function() {
+                     document.body.removeChild(loadingDiv);
+                 }, 300);
+                 spUtil.addErrorMessage('PDF export failed: ' + error.message);
+             });
+         }, 1000);
+     };
+
+     c.openEditDashboardModal = function(dashboardSysId) {
+         $scope.selectedSysId = dashboardSysId;
+         console.log("Opening edit modal for sys_id:", dashboardSysId);
+         spModal.open({
+             title: "Edit Dashboard",
+             size: 'lg',
+             widget: "edit_dashboard",
+             widgetInput: {
+                 sys_id: $scope.selectedSysId
+             },
+             buttons: []
+         }).then(function() {
+             c.server.update();
+         });
+     };
+
+     c.showDetailWidget = false;
+     c.selectedDashboard = null;
+
+     c.openDashboardWithTabs = function(sys_id) {
+         var selectedDashboard = c.data.dashboards.find(function(dash) {
+             return dash.sys_id === sys_id;
+         });
+         if (selectedDashboard) {
+             c.selectedDashboard = selectedDashboard;
+             c.showDetailWidget = true;
+             $rootScope.$broadcast('dashboard_selected', selectedDashboard);
+             $rootScope.$broadcast('dashboard_selected_tabs', sys_id);
+         }
+     };
+
+     c.backToDashboards = function() {
+         c.selectedDashboard = null;
+         c.showDetailWidget = false;
+     };
+ };
+
+widget name 
+dashboard_widget_tabs
+        <div class="dashboard-container">   
+            <widget id="dashboard-header"></widget>
+            <widget id="dashboard-tabs"></widget>        
+        </div>
+Widget Name 
+dashboard-header
+<div class="header">
+    <div class="title-section">
+        <div class="green-bar"></div>
+        <div class="title-content">
+            <h1>{{c.data.dashboardInfo.name}}</h1>
+            <p>{{c.data.dashboardInfo.description}}</p> 
+      </div>
+    </div>
+    <div class="owner-box">
+        <p>Owned By</p>
+      
+      <span ng-if="c.data.dashboardInfo.owned_by"><strong>{{c.data.dashboardInfo.owned_by}}</strong></span>
+      <span ng-if="!c.data.dashboardInfo.owned_by" class="no-owner">
+       <strong> is empty</strong>
+      </span>
+    </div>
+</div>
+.dashboard-container {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  max-width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 1.5rem 2rem;
+  border-bottom: .6rem solid #2c3e50;
+}
+
+.title-section {
+  display: flex;
+  align-items: center;
+  flex-grow: 1; /* Allow the title section to take up remaining space */
+}
+
+.green-bar {
+  width: 6px;
+  height: 50px;
+  background-color: #7BC043;
+  margin-right: 15px;
+  border-radius: 3px;
+}
+
+.title-content h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #2C3E50;
+}
+
+.title-content p {
+  margin: 5px 0 20px;
+  color: #95A5A6;
+  font-size: 14px;
+  justify-content: space-between; /* Pushes content apart */
+  
+}
+
+.owner-box {
+  background-color: #2C3E50;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  width: 180px; /* Fixed width for the owner box */
+  text-align: center; /* Center align text inside the box */
+  white-space: nowrap; /* Prevent text wrapping */
+  flex-shrink: 0; /* Prevent the box from shrinking */
+  margin-left: 20px;
+}
+
+.owner-box p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.owner-box strong {
+  font-size: 14px;
+  display: block; /* Ensure the name appears on a new line */
+}
+
+client side code 
+api.controller = function($scope, $rootScope) {
+    var c = this;
+    
+    c.data.dashboardInfo = {
+        name: "",
+        description: "",
+        owned_by: ""
+    };
+    
+    $scope.$on('dashboard_selected', function(event, dashboard) {
+        c.data.dashboardInfo = dashboard;
+		//	c.server.update($scope);
+    });
+};
+
+Widget Name : dashboard-tabs
 <div class="dashboard-tabs" ng-if="c.data.tabs">
     <div class="tabs">
         <div class="tab" 
@@ -5,24 +746,16 @@
              ng-click="c.setActiveTab(tab)" 
              ng-class="{'active': c.isActiveTab(tab)}">
             {{tab.name}}
-          <span class="icon icon-edit" aria-hidden="true" ng-click="c.openEditTabModal(tab.sys_id)"></span>
+            <span class="icon icon-edit" aria-hidden="true" ng-click="c.openEditTabModal(tab.sys_id)"></span>
         </div>
-              <!-- Default 'new tab' 
-        <div class="tab" 
-             ng-if="!c.data.tabs.length" 
-             ng-class="{'active': c.isActiveTab(c.defaultTab)}">
-            {{c.defaultTab.name}}
-           <span class="icon icon-edit" aria-hidden="true"></span>
-        </div>-->
         <div class="add-tab" ng-click="c.addTab(c.data.sys_id)">+</div>
     </div>
-
     <div class="content-area">
-        <!-- Tab content here -->
-       <widget id="reports_widget"></widget>
+        <widget id="reports_widget"></widget>
     </div>
 </div>
 
+CSS:
 .dashboard-tabs {
     width: 100%;
 }
@@ -51,7 +784,7 @@
     color: #2C3E50;
     font-weight: bold;
     border-bottom: 4px solid #333333;
-    min-width: 100px; /* Ensures consistent width */
+    min-width: 100px;
     text-align: center;
 }
 
@@ -70,77 +803,13 @@
     cursor: pointer;
 }
 
-.content-area {
-    display: grid;
-    gap: 20px;
-}
-
-.add-report {
-    flex: 1;
-    border: 2px dashed #95A5A6;
-    border-radius: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    cursor: pointer;
-}
-
-.add-report-icon {
-    width: 50px;
-    height: 50px;
-    background-color: black;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-.chart-container {
-    flex: 1;
-    border: 1px solid #E0E0E0;
-    border-radius: 15px;
-    padding: 20px;
-}
-
-.chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.chart-title {
-    font-size: 18px;
-    color: #2C3E50;
-    font-weight: bold;
-}
-
-.edit-icon {
-    cursor: pointer;
-    color: #95A5A6;
-}
-
-.chart {
-    height: 400px;
-    display: flex;
-    align-items: flex-end;
-    gap: 15px;
-    padding: 20px 0;
-}
-
-sERVEVR SIDE scripts
+Server side code 
 (function() {
-	//var dashboardID = input.sys_id || options.sys_id || '';
-
-  if (input) {    
-	var tabs = [];
+    if (input) {
+        var tabs = [];
         var tabGR = new GlideRecord('x_1069982_report_0_tabs');
         tabGR.addQuery('dashboard', input.sys_id);
+        tabGR.orderByDesc('sys_created_on'); // Sort by creation date, newest first
         tabGR.query();
         while (tabGR.next()) {
             tabs.push({
@@ -150,10 +819,10 @@ sERVEVR SIDE scripts
             });
         }
         data.tabs = tabs;
-		}
+    }
 })();
 
-Client controller
+client side code 
 api.controller = function($scope, spUtil, spModal, $rootScope, $timeout) {
     var c = this;
 
@@ -168,9 +837,23 @@ api.controller = function($scope, spUtil, spModal, $rootScope, $timeout) {
     };
 
     spUtil.recordWatch($scope, 'x_1069982_report_0_tabs', '', function(name, data) {
-        console.log(name);
-        console.log(data);
-        c.server.update($scope); // Refresh widget data
+        var currentActiveTabSysId = c.activeTab ? c.activeTab.sys_id : null;
+        c.server.update($scope).then(function() {
+            if (currentActiveTabSysId) {
+                var updatedTab = c.data.tabs.find(function(tab) {
+                    return tab.sys_id === currentActiveTabSysId;
+                });
+                if (updatedTab) {
+                    c.setActiveTab(updatedTab);
+                } else {
+                    if (c.data.tabs && c.data.tabs.length > 0) {
+                        c.setActiveTab(c.data.tabs[0]);
+                    } else {
+                        c.setActiveTab(c.defaultTab);
+                    }
+                }
+            }
+        });
     });
 
     c.defaultTab = {
@@ -178,17 +861,16 @@ api.controller = function($scope, spUtil, spModal, $rootScope, $timeout) {
     };
 
     c.setActiveTab = function(tab) {
-        console.log(tab);
         c.activeTab = tab;
-        setTimeout(function() {
+        $timeout(function() {
             $rootScope.$broadcast('showReports_relatedTotabs', tab);
-        }, 300);
-        //	$rootScope.$broadcast('showReports_relatedTotabs', tab);
+        }, 0);
     };
 
     c.isActiveTab = function(tab) {
-        return c.activeTab === tab;
+        return c.activeTab && tab && c.activeTab.sys_id === tab.sys_id;
     };
+
 
     c.addTab = function(dashboardSysId) {
         spModal.open({
@@ -199,45 +881,29 @@ api.controller = function($scope, spUtil, spModal, $rootScope, $timeout) {
                 sys_id: dashboardSysId
             },
             buttons: []
-        }).then(function() {
-            c.server.update().then(function(response) {
-                $scope.$applyAsync(function() {
-                    if (response.data.tabs && response.data.tabs.length > 0) {
-                        c.setActiveTab(response.data.tabs[response.data.tabs.length - 1]); // Set last tab as active
-                    }
-                });
-            });
-
         });
-
     };
 
 
-    c.addReport = function() {
-        spModal.open({
-            title: 'Add a New Report',
-            size: 'lg',
-            widget: 'create_report',
-            buttons: [],
 
-        });
-    }
-
-    $scope.$on('dashboard_selected_tabs', function(event, sys_id) {
-        c.data.sys_id = sys_id;
-        c.server.update().then(function(response) {
-            $scope.$applyAsync(function() {
-                if (c.data.tabs && c.data.tabs.length > 0) {
-                    c.setActiveTab(c.data.tabs[0]);
-                } else {
-                    c.setActiveTab(c.defaultTab);
-                }
+    $scope.$on('newTabCreated', function(event, newTab) {
+        c.data.tabs = c.data.tabs || [];
+        c.data.tabs.push(newTab);
+        c.setActiveTab(newTab);
+        c.server.update().then(function() {
+            // Find the updated tab by sys_id
+            var updatedTab = c.data.tabs.find(function(tab) {
+                return tab.sys_id === newTab.sys_id;
             });
+            if (updatedTab) {
+                c.setActiveTab(updatedTab);
+            } else {
+                console.error('New tab not found in updated tabs list:', newTab);
+            }
         });
     });
 
     c.openEditTabModal = function(tabSysId) {
-        //alert(tabSysId);
         $scope.selectedSysId = tabSysId;
         spModal.open({
             title: "Edit Tab",
@@ -251,5 +917,1025 @@ api.controller = function($scope, spUtil, spModal, $rootScope, $timeout) {
             c.server.update();
         });
     };
+
+    $scope.$on('dashboard_selected_tabs', function(event, sys_id) {
+        c.data.sys_id = sys_id;
+        c.server.update().then(function(response) {
+            $scope.$applyAsync(function() {
+                if (c.data.tabs && c.data.tabs.length > 0) {
+                    c.setActiveTab(c.data.tabs[0]);
+                } else {
+                    c.setActiveTab(c.defaultTab);
+                }
+            });
+        });
+    });
 };
 
+widget Name: reports_widget
+<div class="detail-header">
+  <button class="export-pdf-btn" ng-click="c.addReport()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+      <path d="M9 17V11H15M9 17H7M9 17H15M15 17V11M15 17H17M13 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V11M13 3L19 9M13 3V7C13 8.10457 13.8954 9 15 9H19" stroke="white" stroke-width="2"/>
+    </svg>
+    Add Report
+  </button>
+  <button class="export-pdf-btn" ng-click="c.exportTABPDF()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+      <path d="M9 17V11H15M9 17H7M9 17H15M15 17V11M15 17H17M13 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V11M13 3L19 9M13 3V7C13 8.10457 13.8954 9 15 9H19" stroke="white" stroke-width="2"/>
+    </svg>
+    Export PDF
+  </button>
+</div>
+
+<div class="no-content-area" ng-show="c.data.chartConfig.length == 0">
+  <h1>There are no reports created in this tab...</h1>
+</div>
+<!--   NEW added -->
+<div class="content-area">
+  <div class="reports-grid" id="reportsGrid">
+    <!-- Responsive charts will be injected here -->
+     <div class="chart-container" ng-repeat="config in c.data.chartConfig" ng-if="config.type !== 'Number'">
+      <!-- Existing chart logic (handled by createChartContainer) -->
+    </div>
+  </div> 
+</div>
+
+<!--   NEW added -->
+CSS
+/* Grid Container for the charts */
+.reports-grid {
+  //display: grid;////existing script  
+  display: flex;//NEW  //arranged dynamically 
+  flex-wrap: wrap;
+  gap: 20px; 
+  width: 100%;
+  padding:0 10px;
+   
+}
+
+@media (max-width: 768px) {//existing script
+  .reports-grid {
+    grid-template-columns: 1fr;//existing script
+    
+  }
+}
+/* Add to your widget's CSS */
+.gantt .chart-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.gantt canvas {
+  max-height: 600px !important;
+}
+
+.chartjs-scale-x-axis .tick text {
+  font-size: 12px;
+  color: #666;
+}
+.number-report-container {
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 20px;
+    width: 100%;
+    min-height: 39rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    //background-color: #ffffff;
+  background-color: #f8f8f8;
+    transition: all 0.3s ease;
+}
+
+.number-card {
+    font-size: 16rem;
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+    padding: 20px;
+    width: 100%;
+    height: 40rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.number-card .loading-text {
+    font-size: 24px;
+    color: #666;
+    font-weight: normal;
+}
+
+.number-card .error-text {
+    font-size: 18px;
+    color: #e74c3c; /* Red for errors */
+    font-weight: bold;
+}
+/* The top detail header */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width:100%;
+  margin-bottom: 20px;
+  margin-top: 15px;
+  padding: 0 1rem;
+}
+
+/* Buttons in the header */
+.export-pdf-btn {
+  background: #2d3748;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.export-pdf-btn:hover {
+  background: #1a202c;
+}
+/* No Content Area */
+.no-content-area {
+    border: 1px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 20px;
+    width: 100%;
+    height: 20rem;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fafafa;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.no-content-area h1 {
+    font-size: 24px;
+    color: #666;
+    font-weight: 400;
+}
+
+//NEW START
+.chart-container {
+  flex: 1 1 calc(50% - 20px);  
+  border: 1px solid #E0E0E0; 
+  border-radius: 15px; 
+  padding: 20px;
+  box-sizing: border-box; 
+  min-width: 400px;
+  max-width: 100%;
+  background-color: #f8f8f8; // updated 2 4 25
+}
+
+
+.chart-container.gantt {
+    flex: 1 1 100% !important; /* Full width */
+    order: 1;
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    flex: 1 1 100%; 
+   max-width: 100%;
+  }
+}
+
+.chart-container.empty-placeholder {
+  flex: 1 1 calc(50% - 20px); /* Takes space of missing chart */
+ visibility: hidden; /* Hides placeholder but maintains space */
+}
+@media (max-width: 768px) {
+  .chart-container,
+  .chart-container.empty-placeholder {
+   flex: 1 1 100%; /* Full width in small screens */
+ }
+}
+
+
+//
+.chart-container.maximized {
+  position: fixed !important; 
+  top: 5vh !important; 
+ left: 5vw !important; 
+  width: 90vw !important; 
+  height: 90vh !important;
+  z-index: 9999 !important; 
+  background-color: white !important; 
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3) !important; 
+  border-radius: 10px !important;
+  padding: 20px !important; 
+  overflow: auto !important;
+  transition: all 0.3s ease-in-out !important; 
+}
+
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.chart-header .chart-title {
+  flex: 1;
+  font-size: 18px;
+  color: #2C3E50;
+  font-weight: bold;
+}
+
+/* Action Icons container (top-right corner) */
+.chart-header .action-icons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  position: relative; 
+}
+
+/* Maximize icon with hover */
+.maximize-icon {
+   position: relative;
+  z-index: 10;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 3px;
+}
+.maximize-icon:hover {
+  background-color: #f0f0f0;
+}
+
+/* Ellipsis icon with hover */
+.ellipsis-icon {
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 3px;
+}
+.ellipsis-icon:hover {
+  background-color: #f0f0f0;
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+/* Dropdown items */
+.dropdown-item {
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
+/* Chart area */
+.chart {
+  flex: 1;
+  position: relative;
+  height:400px
+}
+.chart canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+client controller 
+// Client Controller with fixes
+api.controller = function($scope, $http, spUtil, spModal, $timeout) {
+    var c = this;
+
+    // Function to determine chart container class
+    c.getChartClass = function(chartType) {
+        return chartType === 'gantt' ? 'chart-container gantt' : 'chart-container';
+    };
+
+    // Ensure the global 'data' object exists
+    if (typeof data === "undefined") {
+        var data = {};
+    }
+
+    // Function to open the Add Report modal
+    c.addReport = function() {
+        spModal.open({
+            title: 'Add a New Report',
+            size: 'lg',
+            widget: 'create_report',
+            buttons: [],
+            widgetInput: {
+                sys_id: c.data.tabsObject ? c.data.tabsObject.sys_id : '',
+                tabObject: c.data.tabsObject
+            }
+        });
+    };
+
+    // Function to open the Edit Report modal
+    c.editReport = function(reportConfig) {
+        spModal.open({
+            title: 'Edit Report',
+            size: 'lg',
+            widget: 'edit_report',
+            widgetInput: {
+                sys_id: reportConfig.sys_id
+            },
+            buttons: []
+        });
+    };
+
+    // Export entire tab to PDF
+    c.exportTABPDF = function() {
+        if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+            spUtil.addErrorMessage('PDF export libraries are not loaded. Please try again.');
+            return;
+        }
+        var loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-overlay';
+        loadingDiv.innerHTML = '<div class="loading-spinner">Generating PDF...</div>';
+        document.body.appendChild(loadingDiv);
+        $timeout(function() {
+            loadingDiv.classList.add('active');
+        }, 50);
+
+        var elementsToHide = ['.detail-header', '.dropdown-menu'];
+        var originalStyles = [];
+        elementsToHide.forEach(function(selector) {
+            var elements = document.querySelectorAll(selector);
+            for (var i = 0; i < elements.length; i++) {
+                originalStyles.push({
+                    element: elements[i],
+                    display: elements[i].style.display
+                });
+                elements[i].style.display = 'none';
+            }
+        });
+
+        $timeout(function() {
+            var targetElement = document.querySelector('.content-area');
+            html2canvas(targetElement, {
+                scale: 3,
+                useCORS: true,
+                logging: true,
+                allowTaint: true,
+                scrollY: -window.scrollY,
+                backgroundColor: '#ffffff'
+            }).then(function(canvas) {
+                var pdf = new jspdf.jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: true
+                });
+                var imgData = canvas.toDataURL('image/jpeg', 1.0);
+                var pageWidth = pdf.internal.pageSize.getWidth();
+                var pageHeight = pdf.internal.pageSize.getHeight();
+                var imgWidth = pageWidth - 20;
+                var imgHeight = (canvas.height * imgWidth) / canvas.width;
+                pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
+                var heightLeft = imgHeight;
+                var position = 10;
+                while (heightLeft >= pageHeight) {
+                    position = heightLeft - pageHeight + 10;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'JPEG', 10, -position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                var tabName = c.data.tabsObject ? c.data.tabsObject.name.replace(/[^a-zA-Z0-9]/g, '-') : 'report';
+                var today = new Date();
+                var day = today.getDate().toString().padStart(2, '0');
+                var month = (today.getMonth() + 1).toString().padStart(2, '0');
+                var year = today.getFullYear();
+                var dateFormatted = day + '/' + month + '/' + year;
+                pdf.save(tabName + '_' + dateFormatted + '.pdf');
+                originalStyles.forEach(function(item) {
+                    item.element.style.display = item.display;
+                });
+                loadingDiv.classList.remove('active');
+                $timeout(function() {
+                    document.body.removeChild(loadingDiv);
+                }, 300);
+            }).catch(function(error) {
+                console.error('Export failed:', error);
+                originalStyles.forEach(function(item) {
+                    item.element.style.display = item.display;
+                });
+                loadingDiv.classList.remove('active');
+                $timeout(function() {
+                    document.body.removeChild(loadingDiv);
+                }, 300);
+                spUtil.addErrorMessage('PDF export failed: ' + error.message);
+            });
+        }, 1000);
+    };
+
+    // Listen for tab selection events to update reports
+    $scope.$on('showReports_relatedTotabs', function(event, tabObject) {
+        c.data.tabsObject = tabObject;
+        c.data.chartConfig = []; // Clear previous data
+        c.server.update().then(function(response) {
+            c.generateAllCharts();
+        });
+    });
+
+    // Record watch to refresh reports on data changes
+    spUtil.recordWatch($scope, 'x_1069982_report_0_report', '', function(name, data) {
+        c.server.update().then(function(response) {
+            c.generateAllCharts();
+        });
+    });
+
+    // Generate specific colors for charts
+    function generateColors(count) {
+        var colors = [
+            'rgba(128, 0, 128, 0.8)', // Purple
+            'rgba(0, 128, 0, 0.8)', // Green
+            'rgba(0, 0, 255, 0.8)', // Blue
+            'rgba(255, 255, 0, 0.8)', // Yellow
+            'rgba(255, 165, 0, 0.8)', // Orange
+            'rgba(255, 192, 203, 0.8)', // Pink
+            'rgba(128, 128, 128, 0.8)', // Gray
+            'rgba(0, 255, 255, 0.8)' // Cyan
+        ];
+        var result = [];
+        for (var i = 0; i < count; i++) {
+            result.push(colors[i % colors.length]);
+        }
+        return result;
+    }
+    //..........................................EXISTING CODE COMMENT
+    // Toggle maximize/minimize chart container
+    //c.toggleMaximize = function(container) {
+    // if (container.classList.contains('maximized')) {
+    //  container.classList.remove('maximized');
+    // } else {
+    //   container.classList.add('maximized');
+    // }
+    //  };
+    //..............NEW START 4..................
+    c.toggleMaximize = function(container) {
+        console.log("toggleMaximize function called!"); //>>>>>>>>>>4444
+        if (container.classList.contains('maximized')) {
+            console.log("Minimizing..."); //>>>>>>>>>>444444
+            container.classList.remove('maximized');
+            document.body.style.overflow = 'auto';
+        } else {
+            console.log("Maximizing..."); //>>>>>>>>>>>>4444444444
+            container.classList.add('maximized');
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    //.............NEW END 4...................
+    // Export chart container as JPG
+    c.exportChartJPG = function(container, chartName) {
+        var dropdown = container.querySelector('.dropdown-menu');
+        var originalDisplay = dropdown ? dropdown.style.display : 'block';
+        if (dropdown) dropdown.style.display = 'none';
+
+        html2canvas(container, {
+            scale: 3,
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        }).then(function(canvas) {
+            var imageData = canvas.toDataURL("image/jpeg", 1.0);
+            var link = document.createElement('a');
+            var today = new Date();
+            var day = today.getDate().toString().padStart(2, '0');
+            var month = (today.getMonth() + 1).toString().padStart(2, '0');
+            var year = today.getFullYear();
+            var dateFormatted = day + '/' + month + '/' + year;
+            link.href = imageData;
+            link.download = chartName.replace(/[^a-zA-Z0-9]/g, '-') + '_' + dateFormatted + '.jpg';
+            link.click();
+            if (dropdown) dropdown.style.display = originalDisplay;
+        }).catch(function(error) {
+            console.error('JPG export failed:', error);
+            if (dropdown) dropdown.style.display = originalDisplay;
+            spUtil.addErrorMessage('JPG export failed: ' + error.message);
+        });
+    };
+
+    // Export chart container as PDF
+    c.exportChartPDF = function(container, chartName) {
+        var dropdown = container.querySelector('.dropdown-menu');
+        var originalDisplay = dropdown ? dropdown.style.display : 'block';
+        if (dropdown) dropdown.style.display = 'none';
+
+        html2canvas(container, {
+            scale: 3,
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        }).then(function(canvas) {
+            var imgData = canvas.toDataURL("image/jpeg", 1.0);
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+                // alert('jsPDF library is not loaded');
+                if (dropdown) dropdown.style.display = originalDisplay;
+                return;
+            }
+            var pdf = new window.jspdf.jsPDF({
+                orientation: 'landscape',
+                unit: 'px',
+                format: [canvas.width / 3, canvas.height / 3]
+            });
+            pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 3, canvas.height / 3);
+            var today = new Date();
+            var day = today.getDate().toString().padStart(2, '0');
+            var month = (today.getMonth() + 1).toString().padStart(2, '0');
+            var year = today.getFullYear();
+            var dateFormatted = day + '/' + month + '/' + year;
+            pdf.save(chartName.replace(/[^a-zA-Z0-9]/g, '-') + '_' + dateFormatted + '.pdf');
+            if (dropdown) dropdown.style.display = originalDisplay;
+        }).catch(function(error) {
+            console.error('PDF export failed:', error);
+            if (dropdown) dropdown.style.display = originalDisplay;
+            spUtil.addErrorMessage('PDF export failed: ' + error.message);
+        });
+    };
+
+    // Helper function to create chart container
+    function createChartContainer(config, index) {
+        var container = document.createElement('div');
+        container.className = c.getChartClass(config.type);
+
+
+        var header = document.createElement('div');
+        header.className = 'chart-header';
+
+        var title = document.createElement('div');
+        title.className = 'chart-title';
+        title.innerHTML = config.name;
+        header.appendChild(title);
+
+        var actions = document.createElement('div');
+        actions.className = 'action-icons';
+
+        var maximizeIcon = document.createElement('div');
+        maximizeIcon.className = 'maximize-icon';
+        maximizeIcon.innerHTML = '⤢';
+        maximizeIcon.onclick = function(event) {
+            console.log("Maximize icon clicked!"); //>>>>444444>>>>>>>
+            event.stopPropagation();
+            //c.toggleMaximize(container);//comments existing 
+            c.toggleMaximize(this.closest('.chart-container')); //>>>>>>>4444
+        };
+        actions.appendChild(maximizeIcon);
+
+        var ellipsisIcon = document.createElement('div');
+        ellipsisIcon.className = 'ellipsis-icon';
+        ellipsisIcon.innerHTML = '☰';
+        actions.appendChild(ellipsisIcon);
+
+        header.appendChild(actions);
+        container.appendChild(header);
+
+        var chartDiv = document.createElement('div');
+        chartDiv.className = 'chart';
+        var canvas = document.createElement('canvas');
+        canvas.id = 'chart_' + index;
+        canvas.height = '400px';
+        canvas.width = '400px';
+        chartDiv.appendChild(canvas);
+        container.appendChild(chartDiv);
+
+        var dropdown = document.createElement('div');
+        dropdown.className = 'dropdown-menu';
+        dropdown.style.display = 'none';
+
+        var editOption = document.createElement('div');
+        editOption.className = 'dropdown-item';
+        editOption.innerHTML = 'Edit';
+        editOption.onclick = function(event) {
+            event.stopPropagation();
+            c.editReport(config);
+            dropdown.style.display = 'none';
+        };
+        dropdown.appendChild(editOption);
+
+        var exportPdfOption = document.createElement('div');
+        exportPdfOption.className = 'dropdown-item';
+        exportPdfOption.innerHTML = 'Export to PDF';
+        exportPdfOption.onclick = function(event) {
+            event.stopPropagation();
+            c.exportChartPDF(container, config.name);
+            dropdown.style.display = 'none';
+        };
+        dropdown.appendChild(exportPdfOption);
+
+        var exportJpgOption = document.createElement('div');
+        exportJpgOption.className = 'dropdown-item';
+        exportJpgOption.innerHTML = 'Export to JPG';
+        exportJpgOption.onclick = function(event) {
+            event.stopPropagation();
+            c.exportChartJPG(container, config.name);
+            dropdown.style.display = 'none';
+        };
+        dropdown.appendChild(exportJpgOption);
+
+        actions.appendChild(dropdown);
+
+        ellipsisIcon.onclick = function(event) {
+            event.stopPropagation();
+            dropdown.style.display = (dropdown.style.display === 'none') ? 'block' : 'none';
+        };
+
+        document.addEventListener('click', function(event) {
+            if (!actions.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        return {
+            container: container,
+            canvas: canvas
+        };
+    }
+
+    c.generateAllCharts = function() {
+        var parent = document.getElementById('reportsGrid');
+        if (!parent) return;
+        parent.innerHTML = '';
+
+        if (!c.data.chartConfig.length) {
+            $scope.$applyAsync();
+            return;
+        }
+
+
+
+        for (var i = 0; i < c.data.chartConfig.length; i++) {
+            (function(index) {
+                var config = c.data.chartConfig[index];
+                var chartElements = createChartContainer(config, index);
+                var container = chartElements.container;
+                var canvas = chartElements.canvas;
+                parent.appendChild(container);
+
+                if (config.type === 'number') {
+                    var chartDiv = container.querySelector('.chart');
+                    if (chartDiv) chartDiv.remove();
+
+                    var numberCard = document.createElement('div');
+                    numberCard.className = 'number-card';
+                    numberCard.innerHTML = '<span class="loading-text">Loading...</span>';
+                    container.appendChild(numberCard);
+
+                    var gaNumber = new GlideAjax("global.getChartRevamp");
+                    gaNumber.addParam("sysparm_name", "getNumber");
+                    gaNumber.addParam("sysparm_table", config.table);
+                    gaNumber.addParam("sysparm_query", config.query || '');
+                    gaNumber.getXMLAnswer(function(response) {
+                        var count = response;
+                        numberCard.innerHTML = count;
+                    });
+                } else if (config.type === 'gantt') {
+                    var gaTasks = new GlideAjax("global.getChartRevamp");
+                    gaTasks.addParam("sysparm_name", "getTasks");
+                    gaTasks.addParam("sysparm_table", config.table);
+                    gaTasks.addParam("sysparm_sdate", config.startDate);
+                    gaTasks.addParam("sysparm_edate", config.endDate);
+                    gaTasks.addParam("sysparm_query", config.query || '');
+                    gaTasks.getXMLAnswer(function(response) {
+                        var tasks = JSON.parse(response);
+                        initializeGanttChart(canvas, tasks);
+                    });
+                } else if (config.type === 'mixed') {
+                    var gaChart = new GlideAjax("global.getChartRevamp");
+                    gaChart.addParam("sysparm_name", "getChart"); // Fixed to use "getChart"
+                    gaChart.addParam("sysparm_tables", config.table);
+                    gaChart.addParam("sysparm_fields", config.field);
+                    gaChart.addParam("sysparm_query", config.query || '');
+                    gaChart.getXMLAnswer(function(response) {
+                        var res = JSON.parse(response);
+                        var ctx = canvas.getContext("2d");
+                        initializeMixedChart(ctx, res);
+                    });
+                } else {
+                    var gaChart = new GlideAjax("global.getChartRevamp");
+                    gaChart.addParam("sysparm_name", "getChart");
+                    gaChart.addParam("sysparm_tables", config.table);
+                    gaChart.addParam("sysparm_fields", config.field);
+                    gaChart.addParam("sysparm_query", config.query || '');
+                    gaChart.getXMLAnswer(function(response) {
+                        var res = JSON.parse(response);
+                        var ctx = canvas.getContext("2d");
+                        initializeStandardChart(ctx, config.type, res);
+                    });
+                }
+            })(i);
+        }
+    };
+
+    // Initialize Gantt Chart with fixed tooltip
+    function initializeGanttChart(canvas, tasks) {
+        var ctx = canvas.getContext("2d");
+
+        // Format dates for better display
+        tasks.forEach(function(task) {
+            task.startObj = new Date(task.start);
+            task.endObj = new Date(task.end);
+        });
+
+        // Find min and max dates for better scale
+        var minDate = tasks.length > 0 ? new Date(tasks[0].start) : new Date();
+        var maxDate = tasks.length > 0 ? new Date(tasks[0].end) : new Date();
+
+        tasks.forEach(function(task) {
+            var startDate = new Date(task.start);
+            var endDate = new Date(task.end);
+            if (startDate < minDate) minDate = startDate;
+            if (endDate > maxDate) maxDate = endDate;
+        });
+
+        // Add padding to date range
+        minDate.setDate(minDate.getDate() - 7);
+        maxDate.setDate(maxDate.getDate() + 7);
+
+        var config = {
+            type: 'bar',
+            data: {
+                labels: tasks.map(function(task) {
+                    return task.id;
+                }),
+                datasets: [{
+                    label: 'Tasks',
+                    data: tasks.map(function(task) {
+                        return {
+                            x: [task.startObj, task.endObj],
+                            y: task.id,
+                            _start: task.start,
+                            _end: task.end
+                        };
+                    }),
+                    backgroundColor: tasks.map(function(task) {
+                        return task.color;
+                    }),
+                    borderWidth: 0.5,
+                    borderColor: '#2c3e50',
+                    borderSkipped: false,
+                    borderRadius: 0,
+                    barThickness: 5,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var dataPoint = context.raw;
+                                // Format dates nicely for tooltip
+                                var startDate = new Date(dataPoint._start);
+                                var endDate = new Date(dataPoint._end);
+                                var formatDate = function(date) {
+                                    return date.toLocaleDateString(undefined, {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                    });
+                                };
+                                return [
+                                    'Start: ' + formatDate(startDate),
+                                    'End: ' + formatDate(endDate),
+                                    'Duration: ' + Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + ' days'
+                                ];
+                            }
+                        }
+                    },
+                    datalabels: {
+                        display: false,
+                        //  color: '#fff',
+                        //font: {
+                        //  weight: 'bold'
+                        //    },
+                        formatter: function(value, context) {
+                            var startDate = new Date(value.x[0]);
+                            var endDate = new Date(value.x[1]);
+                            var days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+                            return days + 'd';
+                        },
+                        anchor: 'center',
+                        align: 'center'
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'MMM d'
+                            }
+                        },
+                        position: 'top',
+                        min: minDate,
+                        max: maxDate,
+                        title: {
+                            display: true,
+                            text: 'Timeline'
+                        }
+                    },
+                    y: {
+                        type: 'category',
+                        title: {
+                            display: true,
+                            text: 'Tasks'
+                        },
+                        ticks: {
+                            autoSkip: false
+                        }
+                    }
+                }
+            }
+        };
+        new Chart(ctx, config);
+    }
+
+    // Initialize Mixed Chart (Bar + Line)
+    function initializeMixedChart(ctx, data) {
+        var colors = generateColors(data.states.length);
+
+        var chartConfig = {
+            type: 'bar',
+            data: {
+                labels: data.states,
+                datasets: [{
+                        label: 'Count',
+                        data: data.counts,
+                        backgroundColor: colors,
+                        borderColor: colors.map(function(color) {
+                            return color.replace('0.8', '1');
+                        }),
+                        borderWidth: 1,
+                        order: 2
+                    },
+                    {
+                        label: 'Trend',
+                        data: data.counts,
+                        type: 'line',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                        pointRadius: 5,
+                        fill: false,
+                        tension: 0.4,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        color: function(context) {
+                            return context.dataset.type === 'line' ? '#36a2eb' : '#fff';
+                        },
+                        anchor: function(context) {
+                            return context.dataset.type === 'line' ? 'end' : 'center';
+                        },
+                        align: function(context) {
+                            return context.dataset.type === 'line' ? 'top' : 'center';
+                        },
+                        font: {
+                            weight: 'bold'
+                        },
+                        formatter: function(value, context) {
+                            return value;
+                        },
+                        display: function(context) {
+                            return true; // Show all data labels
+                        }
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Count'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: data.states.length > 0 ? 'Categories' : ''
+                        }
+                    }
+                }
+            }
+        };
+
+        new Chart(ctx, chartConfig);
+    }
+
+    // Initialize Standard Charts (Doughnut, Pie, Bar, Line)
+    function initializeStandardChart(ctx, chartType, data) {
+        var chartConfig = {
+            type: chartType,
+            data: {
+                labels: data.states,
+                datasets: [{
+                    label: 'Dataset',
+                    data: data.counts,
+                    backgroundColor: generateColors(data.states.length),
+                    borderColor: chartType === 'line' ? generateColors(1)[0] : undefined,
+                    fill: chartType === 'line' ? false : true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        color: '#000000', // Set to black for all cases
+                        anchor: chartType === 'line' ? 'end' : 'center',
+                        align: chartType === 'line' ? 'top' : 'center',
+                        formatter: function(value, context) {
+                            return value; // Show only the count, no percentage
+                        },
+                        font: {
+                            weight: 'bold'
+                        },
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.label || '';
+                                var value = context.raw;
+                                if (['pie', 'doughnut'].includes(chartType)) {
+                                    var sum = context.dataset.data.reduce(function(a, b) {
+                                        return a + b;
+                                    }, 0);
+                                    var percentage = Math.round((value / sum) * 100);
+                                    return label + ': ' + value + ' (' + percentage + '%)';
+                                }
+                                return label + ': ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        if (chartType === 'doughnut') {
+            chartConfig.options.cutout = '50%';
+        }
+
+        new Chart(ctx, chartConfig);
+    }
+
+
+    // Load external libraries sequentially to ensure proper order
+    function loadScripts(callback) {
+        var scripts = [
+            'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js',
+            'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js',
+            'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js'
+        ];
+
+        function loadNext(index) {
+            if (index < scripts.length) {
+                var s = document.createElement('script');
+                s.src = scripts[index];
+                s.onload = function() {
+
+                    if (scripts[index].includes('chartjs-plugin-datalabels')) {
+                        Chart.register(ChartDataLabels);
+                    }
+                    loadNext(index + 1);
+                };
+                document.head.appendChild(s);
+            } else {
+                callback();
+            }
+        }
+        loadNext(0);
+    }
+
+    loadScripts(function() {
+        c.generateAllCharts();
+    });
+};
